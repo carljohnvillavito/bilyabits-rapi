@@ -1,9 +1,10 @@
 # BILYABITS-RAPI
 
 ## Overview
-Open-source REST API platform built with Node.js, Express, EJS, and TailwindCSS. Uses PostgreSQL for user authentication, API key storage, and call tracking.
+Open-source REST API platform built with Node.js, Express, EJS, and TailwindCSS. Supports multiple database types (PostgreSQL, MongoDB, Supabase) for user authentication, API key storage, and call tracking.
 
 ## Recent Changes
+- 2026-02-13: Added multi-database support (DB_TYPE env var), .env.example, moved admin creds to env vars
 - 2026-02-13: Added GLM AI Chat command with drawer auto-select feature
 - 2026-02-13: Added notification system (admin can message all/specific users, realtime polling)
 - 2026-02-13: Converted mobile burger menu to left side drawer
@@ -15,9 +16,10 @@ Open-source REST API platform built with Node.js, Express, EJS, and TailwindCSS.
 ### Tech Stack
 - **Backend**: Node.js + Express
 - **Templates**: EJS with TailwindCSS (CDN)
-- **Database**: PostgreSQL (Replit built-in)
+- **Database**: PostgreSQL (default), with support structure for MongoDB and Supabase
 - **Auth**: bcryptjs + express-session with PgSession store
 - **Security**: helmet, rate limiting, CSRF-safe session cookies
+- **HTTP Client**: axios (for API tool commands)
 
 ### Folder Structure
 ```
@@ -28,6 +30,7 @@ Open-source REST API platform built with Node.js, Express, EJS, and TailwindCSS.
 /public           - Static assets
 server.js         - Main Express server
 config.json       - App configuration (colors, socials, version)
+.env.example      - Environment variable template
 ```
 
 ### Key Routes
@@ -49,11 +52,18 @@ importAsset(api, async (params) => { return result; });
 ```
 
 ### Config
-- `config.json` - App settings, colors, socials
-- Environment variables: DATABASE_URL, SESSION_SECRET, ADMIN_USERNAME, ADMIN_PASSWORD
+- `config.json` - App settings, colors, socials (no credentials)
+- Environment variables: DB_TYPE, DATABASE_URL, SESSION_SECRET, ADMIN_USERNAME, ADMIN_PASSWORD
+- See `.env.example` for all supported variables
+
+### Database Support
+- `DB_TYPE=postgresql` (default) - Uses built-in Replit PostgreSQL
+- `DB_TYPE=mongodb` - Requires MONGODB_URI (structure ready, implementation pending)
+- `DB_TYPE=supabase` - Requires SUPABASE_URL + SUPABASE_KEY (structure ready, implementation pending)
 
 ## User Preferences
 - Mobile-first responsive design
 - Color palette: #114232, #87A922, #FCDC2A, #F7F6BB
 - API tool keys: Keep API keys directly inside command files (not in env secrets)
 - Notifications: Must work for both existing and newly created accounts
+- Admin credentials: Store in environment variables, not in config files

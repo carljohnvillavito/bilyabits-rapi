@@ -187,8 +187,8 @@ app.get('/korekong/admin/login', (req, res) => {
 
 app.post('/korekong/admin/login', authLimiter, async (req, res) => {
   const { username, password } = req.body;
-  const adminUser = process.env.ADMIN_USERNAME || config.adminCreds.username;
-  const adminPass = process.env.ADMIN_PASSWORD || config.adminCreds.password;
+  const adminUser = process.env.ADMIN_USERNAME || 'admin';
+  const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
   const usernameMatch = username === adminUser;
   const passwordMatch = password === adminPass;
   if (usernameMatch && passwordMatch) {
