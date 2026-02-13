@@ -1,0 +1,23 @@
+{
+    "version": "1.0.0",
+    "host": "0.0.0.0",
+    "port": 5000,
+    "ownerName": "Carl John Villavito",
+    "adminCreds": {
+        "username": "admin",
+        "password": "admin123"
+    },
+    "apikey_name": "bilyabits",
+    "ColorPalletes": {
+        "color1": "#114232",
+        "color2": "#87A922",
+        "color3": "#FCDC2A",
+        "color4": "#F7F6BB"
+    },
+    "socials": {
+        "repo-loc": "https://github.com/carljohnvillavito/nameof-rest-api",
+        "facebook": "https://facebook.com/carljohn.villavito",
+        "instagram": "https://instagram.com/carljohn.villavito",
+        "telegram": "https://t.me/carljohnvillavito"
+    }
+}

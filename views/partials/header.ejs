@@ -1,0 +1,71 @@
+<header class="sticky top-0 z-50 glass border-b border-white/10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <a href="/" class="flex items-center gap-2">
+        <div class="w-8 h-8 bg-gradient-to-br from-secondary to-accent rounded-lg flex items-center justify-center font-bold text-primary text-sm">B</div>
+        <span class="font-bold text-lg hidden sm:block">BILYABITS<span class="text-secondary">-RAPI</span></span>
+      </a>
+
+      <nav class="hidden md:flex items-center gap-6">
+        <% if (typeof categories !== 'undefined' && categories) { %>
+          <% for (const [cat, apis] of Object.entries(categories)) { %>
+            <div class="relative group">
+              <button class="text-sm text-gray-300 hover:text-secondary transition flex items-center gap-1">
+                <%= cat %>
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </button>
+              <div class="absolute top-full left-0 mt-2 w-48 glass rounded-lg py-2 hidden group-hover:block">
+                <% apis.forEach(function(a) { %>
+                  <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:text-secondary hover:bg-white/5 transition"><%= a.name %></a>
+                <% }); %>
+              </div>
+            </div>
+          <% } %>
+        <% } %>
+      </nav>
+
+      <div class="hidden md:flex items-center gap-3">
+        <% if (typeof user !== 'undefined' && user) { %>
+          <a href="/user/<%= user.username %>" class="text-sm text-gray-300 hover:text-white transition"><%= user.username %></a>
+          <a href="/logout" class="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg text-sm hover:bg-red-500/30 transition">Logout</a>
+        <% } else { %>
+          <a href="/login" class="text-sm text-gray-300 hover:text-white transition">Login</a>
+          <a href="/register" class="px-4 py-2 bg-secondary text-primary rounded-lg text-sm font-semibold hover:bg-secondary/80 transition">Sign Up</a>
+        <% } %>
+      </div>
+
+      <button id="mobileToggle" class="md:hidden text-gray-300 hover:text-white">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="mobileMenu" class="hidden md:hidden border-t border-white/10">
+    <div class="px-4 py-4 space-y-3">
+      <% if (typeof categories !== 'undefined' && categories) { %>
+        <% for (const [cat, apis] of Object.entries(categories)) { %>
+          <div>
+            <button class="mobile-dropdown-toggle w-full text-left text-sm text-gray-300 hover:text-secondary transition flex items-center justify-between py-2">
+              <%= cat %>
+              <svg class="w-3 h-3 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="mobile-dropdown-content hidden pl-4 space-y-1">
+              <% apis.forEach(function(a) { %>
+                <a href="#" class="block py-1 text-sm text-gray-400 hover:text-secondary"><%= a.name %></a>
+              <% }); %>
+            </div>
+          </div>
+        <% } %>
+      <% } %>
+      <div class="pt-3 border-t border-white/10 space-y-2">
+        <% if (typeof user !== 'undefined' && user) { %>
+          <a href="/user/<%= user.username %>" class="block py-2 text-sm text-gray-300">Dashboard</a>
+          <a href="/logout" class="block py-2 text-sm text-red-400">Logout</a>
+        <% } else { %>
+          <a href="/login" class="block py-2 text-sm text-gray-300">Login</a>
+          <a href="/register" class="block py-2 text-sm text-secondary font-semibold">Sign Up</a>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</header>

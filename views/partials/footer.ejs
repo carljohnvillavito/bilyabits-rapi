@@ -1,0 +1,46 @@
+<footer class="mt-auto border-t border-white/10 bg-[#060a12]">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div>
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-8 h-8 bg-gradient-to-br from-secondary to-accent rounded-lg flex items-center justify-center font-bold text-primary text-sm">B</div>
+          <span class="font-bold text-lg">BILYABITS<span class="text-secondary">-RAPI</span></span>
+        </div>
+        <p class="text-gray-400 text-sm">Open source REST API platform. Build, test, and deploy APIs effortlessly.</p>
+      </div>
+      <div>
+        <h4 class="font-semibold text-sm mb-3 text-secondary">Quick Links</h4>
+        <div class="space-y-2">
+          <a href="/" class="block text-sm text-gray-400 hover:text-white transition">Home</a>
+          <a href="/login" class="block text-sm text-gray-400 hover:text-white transition">Login</a>
+          <a href="/register" class="block text-sm text-gray-400 hover:text-white transition">Register</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="font-semibold text-sm mb-3 text-secondary">Socials</h4>
+        <div class="space-y-2">
+          <a href="<%= config.socials['repo-loc'] %>" target="_blank" class="block text-sm text-gray-400 hover:text-white transition">GitHub</a>
+          <a href="<%= config.socials.facebook %>" target="_blank" class="block text-sm text-gray-400 hover:text-white transition">Facebook</a>
+          <a href="<%= config.socials.telegram %>" target="_blank" class="block text-sm text-gray-400 hover:text-white transition">Telegram</a>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-white/10 mt-8 pt-6 text-center">
+      <p class="text-gray-500 text-xs">&copy; <%= new Date().getFullYear() %> BILYABITS-RAPI by <%= config.ownerName %>. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+<script>
+  document.getElementById('mobileToggle')?.addEventListener('click', () => {
+    document.getElementById('mobileMenu')?.classList.toggle('hidden');
+  });
+  document.querySelectorAll('.mobile-dropdown-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const content = btn.nextElementSibling;
+      content.classList.toggle('hidden');
+      btn.querySelector('svg').classList.toggle('rotate-180');
+    });
+  });
+</script>
+</body>
+</html>

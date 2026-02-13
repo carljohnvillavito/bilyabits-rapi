@@ -1,0 +1,131 @@
+<%- include('../partials/head') %>
+
+<header class="sticky top-0 z-50 glass border-b border-white/10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center">
+          <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        </div>
+        <span class="font-bold text-lg">Admin <span class="text-red-400">Panel</span></span>
+      </div>
+
+      <div class="hidden md:flex items-center gap-4">
+        <a href="/" class="text-sm text-gray-400 hover:text-white transition">Main Site</a>
+        <a href="/korekong/admin/logout" class="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg text-sm hover:bg-red-500/30 transition">Logout</a>
+      </div>
+
+      <button id="mobileToggle" class="md:hidden text-gray-300 hover:text-white">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+    </div>
+  </div>
+  <div id="mobileMenu" class="hidden md:hidden border-t border-white/10 px-4 py-3 space-y-2">
+    <a href="/" class="block text-sm text-gray-400">Main Site</a>
+    <a href="/korekong/admin/logout" class="block text-sm text-red-400">Logout</a>
+  </div>
+</header>
+
+<main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+  <div class="mb-8">
+    <h1 class="text-2xl md:text-3xl font-bold">Admin Overview</h1>
+    <p class="text-gray-400 text-sm mt-1">Real-time platform statistics</p>
+  </div>
+
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="glass rounded-2xl p-4 md:p-6">
+      <p class="text-xs text-gray-400 mb-1">Total Users</p>
+      <p class="text-2xl font-bold text-secondary" id="adminTotalUsers"><%= stats.totalUsers %></p>
+    </div>
+    <div class="glass rounded-2xl p-4 md:p-6">
+      <p class="text-xs text-gray-400 mb-1">Total APIs</p>
+      <p class="text-2xl font-bold text-accent"><%= stats.totalAPIs %></p>
+    </div>
+    <div class="glass rounded-2xl p-4 md:p-6">
+      <p class="text-xs text-gray-400 mb-1">Total API Calls</p>
+      <p class="text-2xl font-bold text-light" id="adminTotalCalls"><%= stats.totalCalls %></p>
+    </div>
+    <div class="glass rounded-2xl p-4 md:p-6">
+      <p class="text-xs text-gray-400 mb-1">Dead APIs</p>
+      <p class="text-2xl font-bold text-red-400"><%= stats.deadAPIs %></p>
+    </div>
+  </div>
+
+  <div class="glass rounded-2xl p-4 md:p-6 mb-8">
+    <h2 class="text-lg font-bold mb-4">Registered Users</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-white/10">
+            <th class="text-left py-3 px-2 text-gray-400 font-medium">Username</th>
+            <th class="text-left py-3 px-2 text-gray-400 font-medium hidden sm:table-cell">Email</th>
+            <th class="text-left py-3 px-2 text-gray-400 font-medium">API Calls</th>
+            <th class="text-left py-3 px-2 text-gray-400 font-medium hidden md:table-cell">Joined</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% users.forEach(function(u) { %>
+            <tr class="border-b border-white/5 hover:bg-white/5">
+              <td class="py-3 px-2 text-secondary"><%= u.username %></td>
+              <td class="py-3 px-2 text-gray-300 hidden sm:table-cell"><%= u.email %></td>
+              <td class="py-3 px-2"><%= u.api_calls %></td>
+              <td class="py-3 px-2 text-gray-400 hidden md:table-cell"><%= new Date(u.created_at).toLocaleDateString() %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <% if (users.length === 0) { %>
+      <p class="text-gray-400 text-sm text-center py-4">No users registered yet.</p>
+    <% } %>
+  </div>
+
+  <div class="glass rounded-2xl p-4 md:p-6">
+    <h2 class="text-lg font-bold mb-4">Loaded API Tools</h2>
+    <% if (apis.length === 0) { %>
+      <p class="text-gray-400 text-sm">No API tools loaded.</p>
+    <% } else { %>
+      <div class="space-y-3">
+        <% apis.forEach(function(api) { %>
+          <div class="bg-white/5 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-semibold text-sm"><%= api.name %></span>
+                <span class="px-2 py-0.5 bg-secondary/20 text-secondary rounded-full text-xs"><%= api.category %></span>
+                <span class="w-2 h-2 rounded-full <%= api.alive ? 'bg-green-400' : 'bg-red-400' %>"></span>
+              </div>
+              <code class="text-xs text-gray-400 font-mono mt-1 block">/<%= api.category.toLowerCase() %><%= api.route.toLowerCase() %></code>
+            </div>
+            <span class="text-xs text-gray-500"><%= api.requireKey ? 'Key Required' : 'Free Access' %></span>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+  </div>
+</main>
+
+<footer class="border-t border-white/10 bg-[#060a12] mt-auto">
+  <div class="max-w-7xl mx-auto px-4 py-6 text-center">
+    <p class="text-gray-500 text-xs">&copy; <%= new Date().getFullYear() %> BILYABITS-RAPI Admin Panel</p>
+  </div>
+</footer>
+
+<script>
+  document.getElementById('mobileToggle')?.addEventListener('click', () => {
+    document.getElementById('mobileMenu')?.classList.toggle('hidden');
+  });
+
+  async function refreshStats() {
+    try {
+      const resp = await fetch('/api/admin/stats');
+      if (resp.ok) {
+        const data = await resp.json();
+        document.getElementById('adminTotalUsers').textContent = data.totalUsers;
+        document.getElementById('adminTotalCalls').textContent = data.totalCalls;
+      }
+    } catch(e) {}
+  }
+  setInterval(refreshStats, 5000);
+</script>
+</body>
+</html>
