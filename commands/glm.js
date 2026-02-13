@@ -13,7 +13,7 @@ const api = {
   params: {
     "q=": { type: "string", required: true },
     "system=": { type: "string", required: false },
-    "uid=": { type: "string", required: false },
+    "uid=": { type: "int", required: false },
   },
   category: "AI",
   "api-key": true,
