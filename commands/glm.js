@@ -1,4 +1,5 @@
 const { importAsset } = require('../handlers/apiLoader');
+const axios = require('axios');
 
 const API_KEY = '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';
 const MODEL = 'openrouter/pony-alpha';
@@ -25,28 +26,20 @@ importAsset(api, async (params) => {
     throw new Error('Parameter "q" is required. Usage: ?q=your+message');
   }
 
-  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
+  const { data } = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
+    model: MODEL,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ],
+    stream: false,
+  }, {
     headers: {
       'Authorization': `Bearer ${API_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      model: MODEL,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      stream: false,
-    }),
   });
 
-  if (!response.ok) {
-    const errData = await response.json().catch(() => ({}));
-    throw new Error(errData.error?.message || `OpenRouter API returned status ${response.status}`);
-  }
-
-  const data = await response.json();
   const reply = data.choices?.[0]?.message?.content || 'No response generated';
 
   return {
