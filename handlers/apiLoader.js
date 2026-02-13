@@ -5,11 +5,22 @@ const { pool } = require('./database');
 const loadedAPIs = [];
 
 function importAsset(apiConfig, handler) {
+  const rawParams = apiConfig.params || {};
+  const normalizedParams = {};
+  for (const key of Object.keys(rawParams)) {
+    const val = rawParams[key];
+    if (val && typeof val === 'object' && val.type) {
+      normalizedParams[key] = { type: val.type, required: val.required === true };
+    } else {
+      normalizedParams[key] = { type: 'string', required: false };
+    }
+  }
+
   const api = {
     name: apiConfig.name || 'Unnamed API',
     description: apiConfig.description || '',
     route: apiConfig.route || '/',
-    params: apiConfig.params || {},
+    params: normalizedParams,
     category: apiConfig.category || 'General',
     requireKey: apiConfig['api-key'] !== undefined ? apiConfig['api-key'] : true,
     handler: handler,

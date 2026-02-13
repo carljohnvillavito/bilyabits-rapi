@@ -5,7 +5,7 @@ const api = {
   description: 'A simple test endpoint to verify the API system is working correctly.',
   route: '/test',
   params: {
-    'message=': String
+    'message=': { type: 'string', required: false }
   },
   category: 'General',
   'api-key': false

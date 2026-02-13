@@ -9,9 +9,9 @@ const api = {
   description: 'Chat with an AI assistant powered by GLM. Provide a question and optional system prompt.',
   route: '/glm',
   params: {
-    'q=': String,
-    'system=': String,
-    'uid=': String
+    'q=': { type: 'string', required: true },
+    'system=': { type: 'string', required: false },
+    'uid=': { type: 'string', required: false }
   },
   category: 'AI',
   'api-key': true
