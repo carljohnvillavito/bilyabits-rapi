@@ -30,6 +30,15 @@ function setupApiRoutes() {
             });
           }
           userId = user.id;
+        } else {
+          const apikey = req.query.apikey;
+          if (apikey) {
+            const user = await validateApiKey(apikey);
+            if (user) userId = user.id;
+          }
+          if (!userId && req.session && req.session.user) {
+            userId = req.session.user.id;
+          }
         }
 
         const params = {};
@@ -39,9 +48,9 @@ function setupApiRoutes() {
         }
 
         const result = await api.handler(params, req, res);
+        const responseTime = Date.now() - startTime;
 
         if (!res.headersSent) {
-          const responseTime = Date.now() - startTime;
           await logApiCall(userId, api.name, fullRoute, 200, responseTime);
           return res.json({
             status: true,
@@ -49,7 +58,6 @@ function setupApiRoutes() {
             result: result
           });
         } else {
-          const responseTime = Date.now() - startTime;
           await logApiCall(userId, api.name, fullRoute, 200, responseTime);
         }
       } catch (err) {

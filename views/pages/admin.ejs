@@ -1,5 +1,29 @@
 <%- include('../partials/head') %>
 
+<div id="skeletonLoader" class="fixed inset-0 z-[100] bg-[#0a0f1a] flex flex-col items-center justify-center transition-opacity duration-500">
+  <div class="w-full max-w-4xl px-6">
+    <div class="flex items-center gap-3 mb-8">
+      <div class="w-8 h-8 rounded-lg bg-white/10 animate-pulse"></div>
+      <div class="h-5 w-32 rounded-lg bg-white/10 animate-pulse"></div>
+    </div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="glass rounded-2xl p-5"><div class="h-3 w-16 rounded bg-white/10 animate-pulse mb-3"></div><div class="h-7 w-10 rounded bg-white/10 animate-pulse"></div></div>
+      <div class="glass rounded-2xl p-5"><div class="h-3 w-16 rounded bg-white/10 animate-pulse mb-3"></div><div class="h-7 w-10 rounded bg-white/10 animate-pulse"></div></div>
+      <div class="glass rounded-2xl p-5"><div class="h-3 w-16 rounded bg-white/10 animate-pulse mb-3"></div><div class="h-7 w-10 rounded bg-white/10 animate-pulse"></div></div>
+      <div class="glass rounded-2xl p-5"><div class="h-3 w-16 rounded bg-white/10 animate-pulse mb-3"></div><div class="h-7 w-10 rounded bg-white/10 animate-pulse"></div></div>
+    </div>
+    <div class="glass rounded-2xl p-6 mb-6">
+      <div class="h-5 w-36 rounded bg-white/10 animate-pulse mb-4"></div>
+      <div class="space-y-3">
+        <div class="h-10 rounded bg-white/10 animate-pulse"></div>
+        <div class="h-10 rounded bg-white/10 animate-pulse"></div>
+        <div class="h-10 rounded bg-white/10 animate-pulse"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>window.addEventListener('load',()=>{const s=document.getElementById('skeletonLoader');s.style.opacity='0';setTimeout(()=>s.style.display='none',500)});</script>
+
 <header class="sticky top-0 z-50 glass border-b border-white/10">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between h-16">

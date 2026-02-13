@@ -230,6 +230,25 @@ app.get('/api/ping', (req, res) => {
   res.json({ pong: true, timestamp: Date.now() });
 });
 
+app.get('/api/user/stats', requireAuth, async (req, res) => {
+  try {
+    const userResult = await pool.query(
+      'SELECT api_calls FROM users WHERE id = $1',
+      [req.session.user.id]
+    );
+    const apiStats = getStats();
+    const totalCalls = await getTotalApiCalls();
+    res.json({
+      userCalls: userResult.rows[0]?.api_calls || 0,
+      totalAPIs: apiStats.totalAPIs,
+      deadAPIs: apiStats.deadAPIs,
+      totalCalls
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
+
 app.get('/api/admin/stats', requireAdmin, async (req, res) => {
   const totalCalls = await getTotalApiCalls();
   const totalUsers = await getTotalUsers();
