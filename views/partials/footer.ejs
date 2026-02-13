@@ -62,6 +62,26 @@
     });
   });
 
+  function handleApiLinkClick(e) {
+    e.preventDefault();
+    const apiName = e.currentTarget.dataset.apiName;
+    closeDrawer();
+    <% if (typeof user !== 'undefined' && user) { %>
+      const dashUrl = '/user/<%= user.username %>?autoselect=' + encodeURIComponent(apiName);
+      if (window.location.pathname === '/user/<%= user.username %>') {
+        window.autoSelectApi(apiName);
+      } else {
+        window.location.href = dashUrl;
+      }
+    <% } else { %>
+      window.location.href = '/login';
+    <% } %>
+  }
+
+  document.querySelectorAll('.drawer-api-link, .desktop-api-link').forEach(link => {
+    link.addEventListener('click', handleApiLinkClick);
+  });
+
   const notifToggle = document.getElementById('notifToggle');
   const notifPanel = document.getElementById('notifPanel');
   if (notifToggle && notifPanel) {

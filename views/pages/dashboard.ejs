@@ -175,6 +175,33 @@
 
   const apisData = <%- JSON.stringify(apis) %>;
 
+  window.autoSelectApi = function(apiName) {
+    const sel = document.getElementById('apiSelect');
+    for (let i = 0; i < sel.options.length; i++) {
+      const optText = sel.options[i].textContent;
+      if (optText.includes(apiName)) {
+        sel.selectedIndex = i;
+        onApiSelect();
+        const tester = document.querySelector('#apiSelect').closest('.glass');
+        tester.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+          tester.classList.add('ring-2', 'ring-secondary/50');
+          setTimeout(() => tester.classList.remove('ring-2', 'ring-secondary/50'), 2000);
+        }, 500);
+        break;
+      }
+    }
+  };
+
+  (function checkAutoSelect() {
+    const params = new URLSearchParams(window.location.search);
+    const autoselect = params.get('autoselect');
+    if (autoselect) {
+      window.history.replaceState({}, '', window.location.pathname);
+      setTimeout(() => window.autoSelectApi(autoselect), 600);
+    }
+  })();
+
   function copyApiKey() {
     const key = document.getElementById('apiKeyDisplay').textContent;
     navigator.clipboard.writeText(key);
