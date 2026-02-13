@@ -249,6 +249,82 @@ app.get('/api/user/stats', requireAuth, async (req, res) => {
   }
 });
 
+app.get('/api/notifications', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const result = await pool.query(`
+      SELECT n.id, n.sender, n.title, n.message, n.created_at,
+        CASE WHEN nr.id IS NOT NULL THEN true ELSE false END as is_read
+      FROM notifications n
+      LEFT JOIN notification_reads nr ON nr.notification_id = n.id AND nr.user_id = $1
+      WHERE n.target_all = true OR n.target_user_id = $1
+      ORDER BY n.created_at DESC
+      LIMIT 50
+    `, [userId]);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
+});
+
+app.post('/api/notifications/:id/read', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const check = await pool.query(
+      'SELECT id FROM notifications WHERE id = $1 AND (target_all = true OR target_user_id = $2)',
+      [req.params.id, userId]
+    );
+    if (check.rows.length === 0) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    await pool.query(
+      'INSERT INTO notification_reads (notification_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+      [req.params.id, userId]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to mark as read' });
+  }
+});
+
+app.post('/api/notifications/read-all', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    await pool.query(`
+      INSERT INTO notification_reads (notification_id, user_id)
+      SELECT n.id, $1 FROM notifications n
+      LEFT JOIN notification_reads nr ON nr.notification_id = n.id AND nr.user_id = $1
+      WHERE (n.target_all = true OR n.target_user_id = $1) AND nr.id IS NULL
+    `, [userId]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to mark all as read' });
+  }
+});
+
+app.post('/api/admin/notify', requireAdmin, async (req, res) => {
+  try {
+    const { title, message, targetUserId } = req.body;
+    if (!title || !message) {
+      return res.status(400).json({ error: 'Title and message are required' });
+    }
+    if (targetUserId && targetUserId !== 'all') {
+      await pool.query(
+        'INSERT INTO notifications (title, message, target_user_id, target_all) VALUES ($1, $2, $3, false)',
+        [title, message, parseInt(targetUserId)]
+      );
+    } else {
+      await pool.query(
+        'INSERT INTO notifications (title, message, target_all) VALUES ($1, $2, true)',
+        [title, message]
+      );
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to send notification' });
+  }
+});
+
 app.get('/api/admin/stats', requireAdmin, async (req, res) => {
   const totalCalls = await getTotalApiCalls();
   const totalUsers = await getTotalUsers();

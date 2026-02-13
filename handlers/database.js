@@ -46,6 +46,28 @@ async function initDatabase() {
       CREATE INDEX IF NOT EXISTS idx_session_expire ON session (expire);
     `);
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id SERIAL PRIMARY KEY,
+        sender VARCHAR(50) DEFAULT 'Admin',
+        target_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        target_all BOOLEAN DEFAULT false,
+        title VARCHAR(255) NOT NULL,
+        message TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS notification_reads (
+        id SERIAL PRIMARY KEY,
+        notification_id INTEGER REFERENCES notifications(id) ON DELETE CASCADE,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        read_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(notification_id, user_id)
+      );
+    `);
+
     console.log('[DB] Database tables initialized');
   } finally {
     client.release();
