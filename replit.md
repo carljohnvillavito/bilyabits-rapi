@@ -4,6 +4,7 @@
 Open-source REST API platform built with Node.js, Express, EJS, and TailwindCSS. Uses PostgreSQL for user authentication, API key storage, and call tracking.
 
 ## Recent Changes
+- 2026-02-13: Added GLM AI Chat command with drawer auto-select feature
 - 2026-02-13: Added notification system (admin can message all/specific users, realtime polling)
 - 2026-02-13: Converted mobile burger menu to left side drawer
 - 2026-02-13: Fixed API call counting and added skeleton loading
@@ -54,3 +55,5 @@ importAsset(api, async (params) => { return result; });
 ## User Preferences
 - Mobile-first responsive design
 - Color palette: #114232, #87A922, #FCDC2A, #F7F6BB
+- API tool keys: Keep API keys directly inside command files (not in env secrets)
+- Notifications: Must work for both existing and newly created accounts

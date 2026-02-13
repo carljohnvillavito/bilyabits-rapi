@@ -1,5 +1,8 @@
 const { importAsset } = require('../handlers/apiLoader');
 
+const API_KEY = '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';
+const MODEL = 'openrouter/pony-alpha';
+
 const api = {
   name: 'GLM AI Chat',
   description: 'Chat with an AI assistant powered by GLM. Provide a question and optional system prompt.',
@@ -22,19 +25,14 @@ importAsset(api, async (params) => {
     throw new Error('Parameter "q" is required. Usage: ?q=your+message');
   }
 
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    throw new Error('OpenRouter API key is not configured');
-  }
-
   const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${apiKey}`,
+      'Authorization': `Bearer ${API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'openrouter/pony-alpha',
+      model: MODEL,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
@@ -52,7 +50,7 @@ importAsset(api, async (params) => {
   const reply = data.choices?.[0]?.message?.content || 'No response generated';
 
   return {
-    model: data.model || 'openrouter/pony-alpha',
+    model: data.model || MODEL,
     uid: uid,
     reply: reply,
     usage: data.usage || null,

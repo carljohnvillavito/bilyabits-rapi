@@ -177,19 +177,32 @@
 
   window.autoSelectApi = function(apiName) {
     const sel = document.getElementById('apiSelect');
+    let found = false;
     for (let i = 0; i < sel.options.length; i++) {
-      const optText = sel.options[i].textContent;
-      if (optText.includes(apiName)) {
+      const optText = sel.options[i].textContent.trim();
+      if (optText.startsWith(apiName + ' (') || optText === apiName) {
         sel.selectedIndex = i;
-        onApiSelect();
-        const tester = document.querySelector('#apiSelect').closest('.glass');
-        tester.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setTimeout(() => {
-          tester.classList.add('ring-2', 'ring-secondary/50');
-          setTimeout(() => tester.classList.remove('ring-2', 'ring-secondary/50'), 2000);
-        }, 500);
+        found = true;
         break;
       }
+    }
+    if (!found) {
+      for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].textContent.includes(apiName)) {
+          sel.selectedIndex = i;
+          found = true;
+          break;
+        }
+      }
+    }
+    if (found) {
+      onApiSelect();
+      const tester = document.querySelector('#apiSelect').closest('.glass');
+      tester.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => {
+        tester.classList.add('ring-2', 'ring-secondary/50');
+        setTimeout(() => tester.classList.remove('ring-2', 'ring-secondary/50'), 2000);
+      }, 500);
     }
   };
 
