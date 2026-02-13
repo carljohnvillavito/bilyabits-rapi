@@ -47,6 +47,7 @@ const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || require('crypto').randomBytes(32).toString('hex'),
   resave: false,
   saveUninitialized: false,
+  proxy: true,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
@@ -72,11 +73,19 @@ const apiLimiter = rateLimit({
   legacyHeaders: false
 });
 
+function getBaseUrl(req) {
+  if (process.env.BASE_URL) return process.env.BASE_URL.replace(/\/$/, '');
+  const proto = req.headers['x-forwarded-proto'] || req.protocol;
+  const host = req.headers['x-forwarded-host'] || req.headers.host;
+  return `${proto}://${host}`;
+}
+
 function getViewData(req) {
   return {
     config,
     user: req.session?.user || null,
-    categories: getAPIsByCategory()
+    categories: getAPIsByCategory(),
+    baseUrl: getBaseUrl(req)
   };
 }
 
@@ -343,7 +352,7 @@ async function start() {
       res.status(404).render('404', { ...getViewData(req), title: '404' });
     });
 
-    const PORT = config.port || 5000;
+    const PORT = process.env.PORT || config.port || 5000;
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`[BILYABITS-RAPI] Server running on port ${PORT}`);
       console.log(`[BILYABITS-RAPI] Version ${config.version}`);

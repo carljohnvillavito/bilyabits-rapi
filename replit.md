@@ -1,9 +1,15 @@
 # BILYABITS-RAPI
 
 ## Overview
-Open-source REST API platform built with Node.js, Express, EJS, and TailwindCSS. Supports multiple database types (PostgreSQL, MongoDB, Supabase) for user authentication, API key storage, and call tracking.
+Open-source REST API platform built with Node.js, Express, EJS, and TailwindCSS. Supports multiple database types (PostgreSQL, MongoDB, Supabase) for user authentication, API key storage, and call tracking. Compatible with any hosting provider.
 
 ## Recent Changes
+- 2026-02-14: Added notification modal popup with read/unread tracking and message formatting
+- 2026-02-14: Fixed API tester URL to use correct public domain (BASE_URL / x-forwarded-host)
+- 2026-02-14: Made project compatible with any hosting provider (PORT, DB_SSL, proxy support)
+- 2026-02-14: Created comprehensive README.md with deployment guides and one-click buttons
+- 2026-02-14: Added SMS Bomber API command with 5 providers
+- 2026-02-13: Added auto-generated URL in API tester with copy feature
 - 2026-02-13: Added multi-database support (DB_TYPE env var), .env.example, moved admin creds to env vars
 - 2026-02-13: Added GLM AI Chat command with drawer auto-select feature
 - 2026-02-13: Added notification system (admin can message all/specific users, realtime polling)
@@ -31,6 +37,7 @@ Open-source REST API platform built with Node.js, Express, EJS, and TailwindCSS.
 server.js         - Main Express server
 config.json       - App configuration (colors, socials, version)
 .env.example      - Environment variable template
+README.md         - Comprehensive project documentation
 ```
 
 ### Key Routes
@@ -53,17 +60,26 @@ importAsset(api, async (params) => { return result; });
 
 ### Config
 - `config.json` - App settings, colors, socials (no credentials)
-- Environment variables: DB_TYPE, DATABASE_URL, SESSION_SECRET, ADMIN_USERNAME, ADMIN_PASSWORD
+- Environment variables: PORT, BASE_URL, DB_TYPE, DATABASE_URL, DB_SSL, SESSION_SECRET, ADMIN_USERNAME, ADMIN_PASSWORD
 - See `.env.example` for all supported variables
 
 ### Database Support
 - `DB_TYPE=postgresql` (default) - Uses built-in Replit PostgreSQL
 - `DB_TYPE=mongodb` - Requires MONGODB_URI (structure ready, implementation pending)
 - `DB_TYPE=supabase` - Requires SUPABASE_URL + SUPABASE_KEY (structure ready, implementation pending)
+- `DB_SSL=true` - Enable for cloud-hosted PostgreSQL (auto-detected for Render/Neon)
+
+### Hosting Compatibility
+- Server respects `PORT` env var (defaults to 5000)
+- `BASE_URL` env var controls generated API URLs
+- Auto-detects domain from `x-forwarded-host` / `x-forwarded-proto` headers
+- `trust proxy` enabled for reverse proxy deployments
+- Session `proxy: true` for HTTPS behind load balancers
+- SSL auto-detection for cloud PostgreSQL providers
 
 ## User Preferences
 - Mobile-first responsive design
 - Color palette: #114232, #87A922, #FCDC2A, #F7F6BB
 - API tool keys: Keep API keys directly inside command files (not in env secrets)
-- Notifications: Must work for both existing and newly created accounts
+- Notifications: Must work for both existing and newly created accounts, with modal preview
 - Admin credentials: Store in environment variables, not in config files

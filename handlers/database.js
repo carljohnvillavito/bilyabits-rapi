@@ -5,9 +5,11 @@ let dbClient = null;
 
 if (DB_TYPE === 'postgresql' || DB_TYPE === 'postgres') {
   const { Pool } = require('pg');
+  const dbUrl = process.env.DATABASE_URL || '';
+  const useSSL = process.env.DB_SSL === 'true' || (dbUrl.includes('render.com') || dbUrl.includes('neon.tech') || dbUrl.includes('supabase'));
   pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: false
+    connectionString: dbUrl,
+    ssl: useSSL ? { rejectUnauthorized: false } : false
   });
 
   dbClient = {

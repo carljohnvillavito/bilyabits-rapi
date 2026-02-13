@@ -1,14 +1,15 @@
 {
-  "name": "workspace",
+  "name": "bilyabits-rapi",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "dev": "node server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "keywords": ["rest-api", "api-platform", "nodejs", "express"],
+  "author": "Carl John Villavito",
+  "license": "MIT",
+  "description": "Open-source REST API platform with modular command system, user auth, and admin panel",
   "dependencies": {
     "axios": "^1.13.5",
     "bcryptjs": "^3.0.3",

@@ -187,6 +187,7 @@
   });
 
   const apisData = <%- JSON.stringify(apis) %>;
+  const siteBaseUrl = '<%= baseUrl %>';
 
   window.autoSelectApi = function(apiName) {
     const sel = document.getElementById('apiSelect');
@@ -234,7 +235,7 @@
   }
 
   function copyText(text) {
-    navigator.clipboard.writeText(window.location.origin + text);
+    navigator.clipboard.writeText(siteBaseUrl + text);
   }
 
   async function refreshUserStats() {
@@ -329,7 +330,7 @@
       if (apikey) queryParts.push(`apikey=${encodeURIComponent(apikey)}`);
     }
 
-    const fullUrl = window.location.origin + route + (queryParts.length ? '?' + queryParts.join('&') : '');
+    const fullUrl = siteBaseUrl + route + (queryParts.length ? '?' + queryParts.join('&') : '');
     urlDisplay.textContent = fullUrl;
     urlSection.classList.remove('hidden');
 
