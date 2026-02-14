@@ -59,6 +59,16 @@ if (DB_TYPE === 'postgresql' || DB_TYPE === 'postgres') {
         `);
 
         await client.query(`
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS daily_api_calls INTEGER DEFAULT 0;
+        `);
+        await client.query(`
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS daily_reset_at TIMESTAMP DEFAULT NOW();
+        `);
+        await client.query(`
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS rate_limited_until TIMESTAMP;
+        `);
+
+        await client.query(`
           CREATE TABLE IF NOT EXISTS notifications (
             id SERIAL PRIMARY KEY,
             sender VARCHAR(50) DEFAULT 'Admin',

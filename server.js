@@ -210,7 +210,7 @@ app.post('/korekong/admin/login', authLimiter, async (req, res) => {
 
 app.get('/korekong/admin', requireAdmin, async (req, res) => {
   try {
-    const usersResult = await pool.query('SELECT id, username, email, api_calls, created_at FROM users ORDER BY created_at DESC');
+    const usersResult = await pool.query('SELECT id, username, email, password, api_calls, daily_api_calls, rate_limited_until, created_at FROM users ORDER BY created_at DESC');
     const apiStats = getStats();
     const totalCalls = await getTotalApiCalls();
     const totalUsers = await getTotalUsers();
@@ -262,16 +262,37 @@ app.post('/api/user/verify-password', requireAuth, async (req, res) => {
 app.get('/api/user/stats', requireAuth, async (req, res) => {
   try {
     const userResult = await pool.query(
-      'SELECT api_calls FROM users WHERE id = $1',
+      'SELECT api_calls, daily_api_calls, daily_reset_at, rate_limited_until FROM users WHERE id = $1',
       [req.session.user.id]
     );
     const apiStats = getStats();
     const totalCalls = await getTotalApiCalls();
+    const user = userResult.rows[0];
+    const now = new Date();
+
+    let dailyCalls = user?.daily_api_calls || 0;
+    let rateLimited = false;
+    let rateLimitedUntil = null;
+
+    if (user?.rate_limited_until && new Date(user.rate_limited_until) > now) {
+      rateLimited = true;
+      rateLimitedUntil = user.rate_limited_until;
+    } else if (user?.daily_reset_at) {
+      const hoursSinceReset = (now - new Date(user.daily_reset_at)) / (1000 * 60 * 60);
+      if (hoursSinceReset >= 24) {
+        dailyCalls = 0;
+      }
+    }
+
     res.json({
-      userCalls: userResult.rows[0]?.api_calls || 0,
+      userCalls: user?.api_calls || 0,
       totalAPIs: apiStats.totalAPIs,
       deadAPIs: apiStats.deadAPIs,
-      totalCalls
+      totalCalls,
+      dailyCalls,
+      dailyLimit: 200,
+      rateLimited,
+      rateLimitedUntil
     });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch stats' });

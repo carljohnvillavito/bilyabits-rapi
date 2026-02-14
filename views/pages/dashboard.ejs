@@ -97,7 +97,19 @@
     </div>
   </div>
 
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+  <div id="rateLimitBanner" class="hidden mb-4 glass rounded-2xl p-4 border border-red-500/30 bg-red-500/5">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-red-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+        <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.068 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+      </div>
+      <div>
+        <p class="text-sm font-semibold text-red-400">Rate Limit Reached</p>
+        <p id="rateLimitMsg" class="text-xs text-gray-400 mt-0.5"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
     <div class="glass rounded-2xl p-4 md:p-6">
       <p class="text-xs text-gray-400 mb-1">Total APIs</p>
       <p class="text-2xl font-bold text-secondary" id="statTotalAPIs"><%= stats.totalAPIs %></p>
@@ -105,6 +117,13 @@
     <div class="glass rounded-2xl p-4 md:p-6">
       <p class="text-xs text-gray-400 mb-1">Your API Calls</p>
       <p class="text-2xl font-bold text-accent" id="statUserCalls"><%= dashUser.api_calls %></p>
+    </div>
+    <div class="glass rounded-2xl p-4 md:p-6">
+      <p class="text-xs text-gray-400 mb-1">Daily Usage</p>
+      <div class="flex items-baseline gap-1">
+        <p class="text-2xl font-bold text-light" id="statDailyCalls">0</p>
+        <span class="text-xs text-gray-500">/ 200</span>
+      </div>
     </div>
     <div class="glass rounded-2xl p-4 md:p-6">
       <p class="text-xs text-gray-400 mb-1">Dead APIs</p>
@@ -364,6 +383,30 @@
         }
         document.getElementById('statTotalAPIs').textContent = data.totalAPIs;
         document.getElementById('statDeadAPIs').textContent = data.deadAPIs;
+
+        const dailyEl = document.getElementById('statDailyCalls');
+        dailyEl.textContent = data.dailyCalls || 0;
+        if (data.dailyCalls >= 150) {
+          dailyEl.classList.remove('text-light', 'text-accent');
+          dailyEl.classList.add(data.dailyCalls >= 200 ? 'text-red-400' : 'text-accent');
+        }
+
+        const banner = document.getElementById('rateLimitBanner');
+        const bannerMsg = document.getElementById('rateLimitMsg');
+        if (data.rateLimited && data.rateLimitedUntil) {
+          const until = new Date(data.rateLimitedUntil);
+          const remaining = until - Date.now();
+          if (remaining > 0) {
+            const hrs = Math.floor(remaining / (1000 * 60 * 60));
+            const mins = Math.ceil((remaining % (1000 * 60 * 60)) / (1000 * 60));
+            bannerMsg.textContent = `You've used ${data.dailyLimit}/${data.dailyLimit} daily requests. API tools with required keys are unavailable for ${hrs}h ${mins}m.`;
+            banner.classList.remove('hidden');
+          } else {
+            banner.classList.add('hidden');
+          }
+        } else {
+          banner.classList.add('hidden');
+        }
       }
     } catch(e) {}
   }
@@ -536,6 +579,7 @@
     });
   }
   measureLatency();
+  refreshUserStats();
   setInterval(measureLatency, 5000);
   setInterval(refreshUserStats, 5000);
 </script>

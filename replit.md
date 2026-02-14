@@ -4,6 +4,8 @@
 Open-source REST API platform built with Node.js, Express, EJS, and TailwindCSS. Supports multiple database types (PostgreSQL, MongoDB, Supabase) for user authentication, API key storage, and call tracking. Compatible with any hosting provider.
 
 ## Recent Changes
+- 2026-02-14: Added API key rate limiting (200/day, 12h cooldown) with dashboard status display
+- 2026-02-14: Enhanced admin users table with card layout (email, password hash, date, daily usage, rate limit status)
 - 2026-02-14: Added notification modal popup with read/unread tracking and message formatting
 - 2026-02-14: Fixed API tester URL to use correct public domain (BASE_URL / x-forwarded-host)
 - 2026-02-14: Made project compatible with any hosting provider (PORT, DB_SSL, proxy support)
