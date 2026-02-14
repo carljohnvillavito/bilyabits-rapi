@@ -239,6 +239,26 @@ app.get('/api/ping', (req, res) => {
   res.json({ pong: true, timestamp: Date.now() });
 });
 
+app.post('/api/user/verify-password', requireAuth, async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password) {
+      return res.status(400).json({ success: false, error: 'Password is required' });
+    }
+    const result = await pool.query('SELECT password FROM users WHERE id = $1', [req.session.user.id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    const match = await bcrypt.compare(password, result.rows[0].password);
+    if (!match) {
+      return res.status(401).json({ success: false, error: 'Incorrect password' });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Verification failed' });
+  }
+});
+
 app.get('/api/user/stats', requireAuth, async (req, res) => {
   try {
     const userResult = await pool.query(

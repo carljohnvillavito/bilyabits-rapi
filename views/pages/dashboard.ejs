@@ -49,8 +49,11 @@
       <div>
         <p class="text-xs text-gray-400 mb-1">Your API Key</p>
         <div class="flex items-center gap-2">
-          <code id="apiKeyDisplay" class="text-secondary font-mono text-sm bg-white/5 px-3 py-2 rounded-lg"><%= dashUser.api_key %></code>
-          <button onclick="copyApiKey()" class="p-2 hover:bg-white/10 rounded-lg transition" title="Copy">
+          <code id="apiKeyDisplay" class="text-secondary font-mono text-sm bg-white/5 px-3 py-2 rounded-lg select-none" style="filter: blur(6px); transition: filter 0.3s ease;"><%= dashUser.api_key %></code>
+          <button id="toggleKeyBtn" onclick="toggleApiKeyVisibility()" class="p-2 hover:bg-white/10 rounded-lg transition" title="Show/Hide API Key">
+            <svg id="eyeIcon" class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          </button>
+          <button id="copyKeyBtn" onclick="copyApiKey()" class="p-2 hover:bg-white/10 rounded-lg transition hidden" title="Copy">
             <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
           </button>
         </div>
@@ -60,6 +63,37 @@
           Regenerate Key
         </button>
       </form>
+    </div>
+  </div>
+
+  <div id="passwordModal" class="fixed inset-0 z-[200] hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closePasswordModal()"></div>
+    <div class="relative w-full max-w-sm bg-[#0d1321] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-modal-in">
+      <div class="p-5">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 bg-accent/20 rounded-xl flex items-center justify-center">
+            <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm text-white">Verify Identity</h3>
+            <p class="text-[10px] text-gray-500">Enter your password to reveal API key</p>
+          </div>
+        </div>
+        <div class="mb-4">
+          <input type="password" id="verifyPasswordInput" placeholder="Enter your password"
+            class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-secondary transition"
+            onkeydown="if(event.key==='Enter')verifyPassword()">
+          <p id="passwordError" class="text-red-400 text-xs mt-2 hidden"></p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="verifyPassword()" id="verifyBtn" class="flex-1 py-2.5 bg-secondary text-primary font-bold rounded-xl text-sm hover:bg-secondary/80 transition">
+            Verify
+          </button>
+          <button onclick="closePasswordModal()" class="px-4 py-2.5 bg-white/5 text-gray-400 rounded-xl text-sm hover:bg-white/10 transition">
+            Close
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -229,7 +263,85 @@
     }
   })();
 
+  let apiKeyRevealed = false;
+
+  function toggleApiKeyVisibility() {
+    if (apiKeyRevealed) {
+      const keyEl = document.getElementById('apiKeyDisplay');
+      keyEl.style.filter = 'blur(6px)';
+      keyEl.classList.add('select-none');
+      document.getElementById('copyKeyBtn').classList.add('hidden');
+      document.getElementById('eyeIcon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
+      apiKeyRevealed = false;
+    } else {
+      openPasswordModal();
+    }
+  }
+
+  function openPasswordModal() {
+    const modal = document.getElementById('passwordModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.getElementById('verifyPasswordInput').value = '';
+    document.getElementById('passwordError').classList.add('hidden');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('verifyPasswordInput').focus(), 100);
+  }
+
+  function closePasswordModal() {
+    const modal = document.getElementById('passwordModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.style.overflow = '';
+    document.getElementById('verifyPasswordInput').value = '';
+    document.getElementById('passwordError').classList.add('hidden');
+  }
+
+  async function verifyPassword() {
+    const pwd = document.getElementById('verifyPasswordInput').value;
+    const errEl = document.getElementById('passwordError');
+    const btn = document.getElementById('verifyBtn');
+    if (!pwd) {
+      errEl.textContent = 'Please enter your password';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Verifying...';
+    try {
+      const resp = await fetch('/api/user/verify-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pwd })
+      });
+      const data = await resp.json();
+      if (data.success) {
+        closePasswordModal();
+        const keyEl = document.getElementById('apiKeyDisplay');
+        keyEl.style.filter = 'none';
+        keyEl.classList.remove('select-none');
+        document.getElementById('copyKeyBtn').classList.remove('hidden');
+        document.getElementById('eyeIcon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L6.05 6.05m3.828 3.828l4.242 4.242M6.05 6.05l-1.414-1.414M6.05 6.05L3 3m3.05 3.05l4.243 4.243"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18"/>';
+        apiKeyRevealed = true;
+      } else {
+        errEl.textContent = data.error || 'Incorrect password';
+        errEl.classList.remove('hidden');
+      }
+    } catch (e) {
+      errEl.textContent = 'Verification failed. Try again.';
+      errEl.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Verify';
+    }
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closePasswordModal();
+  });
+
   function copyApiKey() {
+    if (!apiKeyRevealed) return;
     const key = document.getElementById('apiKeyDisplay').textContent;
     navigator.clipboard.writeText(key);
   }
