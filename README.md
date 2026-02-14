@@ -12,6 +12,8 @@
   <strong>Open-source REST API platform with a modular command system, user authentication, admin panel, and built-in API tester.</strong>
 </p>
 
+<h2>Demo Site: https://bilyabits-rapi.onrender.com</h2>
+
 <p align="center">
   <a href="#-features">Features</a> •
   <a href="#-quick-start">Quick Start</a> •
