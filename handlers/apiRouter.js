@@ -2,19 +2,15 @@ const express = require('express');
 const router = express.Router();
 const { getAPIs, logApiCall } = require('./apiLoader');
 const { validateApiKey } = require('./auth');
-const { pool } = require('./database');
+const { db } = require('./database');
 
 const DAILY_LIMIT = 200;
 const COOLDOWN_HOURS = 12;
 
 async function checkRateLimit(userId) {
-  const result = await pool.query(
-    'SELECT daily_api_calls, daily_reset_at, rate_limited_until FROM users WHERE id = $1',
-    [userId]
-  );
-  if (result.rows.length === 0) return { allowed: false, error: 'User not found' };
+  const user = await db.getUserRateLimit(userId);
+  if (!user) return { allowed: false, error: 'User not found' };
 
-  const user = result.rows[0];
   const now = new Date();
 
   if (user.rate_limited_until && new Date(user.rate_limited_until) > now) {
@@ -30,29 +26,20 @@ async function checkRateLimit(userId) {
   }
 
   if (user.rate_limited_until && new Date(user.rate_limited_until) <= now) {
-    await pool.query(
-      'UPDATE users SET daily_api_calls = 0, daily_reset_at = NOW(), rate_limited_until = NULL WHERE id = $1',
-      [userId]
-    );
+    await db.resetDailyLimit(userId);
     return { allowed: true, currentCalls: 0 };
   }
 
   const resetAt = new Date(user.daily_reset_at);
   const hoursSinceReset = (now - resetAt) / (1000 * 60 * 60);
   if (hoursSinceReset >= 24) {
-    await pool.query(
-      'UPDATE users SET daily_api_calls = 0, daily_reset_at = NOW(), rate_limited_until = NULL WHERE id = $1',
-      [userId]
-    );
+    await db.resetDailyLimit(userId);
     return { allowed: true, currentCalls: 0 };
   }
 
   if (user.daily_api_calls >= DAILY_LIMIT) {
     const limitUntil = new Date(now.getTime() + COOLDOWN_HOURS * 60 * 60 * 1000);
-    await pool.query(
-      'UPDATE users SET rate_limited_until = $1 WHERE id = $2',
-      [limitUntil, userId]
-    );
+    await db.setRateLimit(userId, limitUntil);
     return {
       allowed: false,
       error: `Rate limit reached (${DAILY_LIMIT} requests/day). You cannot call API tools with required API keys for another ${COOLDOWN_HOURS} hours. Please try again later.`,
@@ -65,10 +52,7 @@ async function checkRateLimit(userId) {
 }
 
 async function incrementDailyCount(userId) {
-  await pool.query(
-    'UPDATE users SET daily_api_calls = daily_api_calls + 1 WHERE id = $1',
-    [userId]
-  );
+  await db.incrementDailyCount(userId);
 }
 
 function setupApiRoutes() {

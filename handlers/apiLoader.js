@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { pool } = require('./database');
+const { db } = require('./database');
 
 const loadedAPIs = [];
 
@@ -73,26 +73,18 @@ function getStats() {
 
 async function logApiCall(userId, apiName, apiRoute, statusCode, responseTimeMs) {
   try {
-    await pool.query(
-      'INSERT INTO api_calls_log (user_id, api_name, api_route, status_code, response_time_ms) VALUES ($1, $2, $3, $4, $5)',
-      [userId, apiName, apiRoute, statusCode, responseTimeMs]
-    );
-    if (userId) {
-      await pool.query('UPDATE users SET api_calls = api_calls + 1 WHERE id = $1', [userId]);
-    }
+    await db.logApiCall(userId, apiName, apiRoute, statusCode, responseTimeMs);
   } catch (err) {
     console.error('[API] Failed to log call:', err.message);
   }
 }
 
 async function getTotalApiCalls() {
-  const result = await pool.query('SELECT COUNT(*) as count FROM api_calls_log');
-  return parseInt(result.rows[0].count);
+  return await db.getTotalApiCalls();
 }
 
 async function getTotalUsers() {
-  const result = await pool.query('SELECT COUNT(*) as count FROM users');
-  return parseInt(result.rows[0].count);
+  return await db.getTotalUsers();
 }
 
 module.exports = {

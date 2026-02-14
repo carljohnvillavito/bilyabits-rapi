@@ -304,14 +304,15 @@ sudo certbot --nginx -d your-domain.com
 | `PORT` | No | `5000` | Port the server listens on |
 | `NODE_ENV` | No | — | Set to `production` for secure cookies and HTTPS |
 | `BASE_URL` | No | Auto-detected | Public URL of your app (used in generated API URLs). If not set, detected from request headers. |
-| `DB_TYPE` | No | `postgresql` | Database type: `postgresql`, `supabase`, `mongodb`* |
-| `DATABASE_URL` | Yes | — | PostgreSQL connection string (e.g., `postgresql://user:pass@host:5432/dbname`) |
+| `DB_TYPE` | No | `postgresql` | Database type: `postgresql`, `supabase`, or `mongodb` |
+| `DATABASE_URL` | Yes* | — | PostgreSQL connection string (e.g., `postgresql://user:pass@host:5432/dbname`) |
+| `MONGODB_URI` | Yes* | — | MongoDB connection string (e.g., `mongodb+srv://user:pass@cluster.mongodb.net/dbname`) |
 | `DB_SSL` | No | Auto-detected | Set to `true` for cloud-hosted PostgreSQL (Render, Neon, Supabase). Auto-detected for known cloud providers. |
 | `SESSION_SECRET` | Yes | Random | Secret key for encrypting session cookies. Use a long random string in production. |
 | `ADMIN_USERNAME` | No | `admin` | Username for the admin panel login |
 | `ADMIN_PASSWORD` | No | `admin123` | Password for the admin panel login |
 
-> *MongoDB adapter is planned for a future release.
+> *`DATABASE_URL` is required for PostgreSQL/Supabase. `MONGODB_URI` is required for MongoDB.
 
 ### Supabase Configuration
 
@@ -326,6 +327,24 @@ When using `DB_TYPE=supabase`, set `DATABASE_URL` to your Supabase PostgreSQL co
 > Supabase is PostgreSQL under the hood. By connecting directly to the database, you get full SQL support, automatic table creation, and persistent sessions — exactly like using regular PostgreSQL.
 >
 > **Note**: `SUPABASE_URL` and `SUPABASE_KEY` alone are not sufficient. This app requires the PostgreSQL connection string (`DATABASE_URL`) for direct database access.
+
+### MongoDB Configuration
+
+When using `DB_TYPE=mongodb`, set `MONGODB_URI` to your MongoDB connection string:
+
+| Variable | Description |
+|----------|-------------|
+| `MONGODB_URI` | Your MongoDB connection string. For MongoDB Atlas: `mongodb+srv://user:password@cluster.mongodb.net/dbname`. For local MongoDB: `mongodb://localhost:27017/bilyabits_rapi`. |
+
+> MongoDB is fully supported with automatic collection creation, indexes, and persistent sessions via `connect-mongo`. All features work identically to the PostgreSQL version — user auth, API key management, rate limiting, notifications, and admin panel.
+>
+> **Getting a free MongoDB Atlas cluster:**
+> 1. Go to [mongodb.com/atlas](https://www.mongodb.com/atlas) and create a free account
+> 2. Create a free shared cluster (M0)
+> 3. Set up a database user with a password
+> 4. Add your server IP to the network access list (or use `0.0.0.0/0` for all IPs)
+> 5. Click "Connect" > "Connect your application" > Copy the connection string
+> 6. Replace `<password>` with your database user's password in the connection string
 
 ---
 
@@ -668,7 +687,7 @@ A: No. All tables are created automatically when the server starts for the first
 A: The app will generate a random session secret on startup. However, this means all user sessions will be invalidated every time the server restarts. Always set a fixed `SESSION_SECRET` in production.
 
 **Q: Can I use this with MySQL or SQLite?**
-A: PostgreSQL and Supabase are fully supported. MongoDB is planned for a future release. MySQL and SQLite are not on the roadmap, but you could contribute an adapter by modifying `handlers/database.js`.
+A: PostgreSQL, Supabase, and MongoDB are all fully supported. Set `DB_TYPE` to `postgresql`, `supabase`, or `mongodb` and provide the corresponding connection string. MySQL and SQLite are not on the roadmap, but you could contribute an adapter by modifying `handlers/database.js`.
 
 ### Users & Authentication
 
@@ -748,7 +767,7 @@ A: Use PM2 (process manager): `pm2 start server.js --name bilyabits-rapi`. PM2 w
 ### Ways to Contribute
 
 - **Add new API commands** — The easiest way to contribute. Create a new file in `/commands/` following the template above.
-- **Implement MongoDB adapter** — The structure is in `handlers/database.js`, waiting for implementation.
+- **Add database adapters** — Want MySQL or SQLite support? Add an adapter in `handlers/database.js` following the existing pattern.
 - **Improve UI/UX** — Templates are in `/views/pages/` using EJS + TailwindCSS.
 - **Add tests** — No test suite exists yet. Adding one would be a great contribution.
 - **Documentation** — Improve this README, add code comments, or create a wiki.

@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
-const PgSession = require('connect-pg-simple')(session);
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
@@ -9,7 +8,7 @@ const bcrypt = require('bcryptjs');
 const path = require('path');
 
 const config = require('./config.json');
-const { pool, dbClient, initDatabase } = require('./handlers/database');
+const { pool, db, initDatabase, getMongoUri, DB_TYPE } = require('./handlers/database');
 const { registerUser, loginUser, getUserByUsername, regenerateApiKey, requireAuth, requireAdmin } = require('./handlers/auth');
 const { loadCommands, getAPIs, getAPIsByCategory, getStats, getTotalApiCalls, getTotalUsers } = require('./handlers/apiLoader');
 const { setupApiRoutes } = require('./handlers/apiRouter');
@@ -51,11 +50,21 @@ const sessionConfig = {
   }
 };
 
-sessionConfig.store = new PgSession({
-  pool: pool,
-  tableName: 'session',
-  createTableIfMissing: true
-});
+if (DB_TYPE === 'mongodb') {
+  const MongoStore = require('connect-mongo');
+  sessionConfig.store = MongoStore.create({
+    mongoUrl: getMongoUri(),
+    collectionName: 'sessions',
+    ttl: 24 * 60 * 60
+  });
+} else {
+  const PgSession = require('connect-pg-simple')(session);
+  sessionConfig.store = new PgSession({
+    pool: pool,
+    tableName: 'session',
+    createTableIfMissing: true
+  });
+}
 
 const sessionMiddleware = session(sessionConfig);
 app.use(sessionMiddleware);
@@ -213,14 +222,14 @@ app.post('/korekong/admin/login', authLimiter, async (req, res) => {
 
 app.get('/korekong/admin', requireAdmin, async (req, res) => {
   try {
-    const usersResult = await pool.query('SELECT id, username, email, password, api_calls, daily_api_calls, rate_limited_until, created_at FROM users ORDER BY created_at DESC');
+    const users = await db.getAllUsers();
     const apiStats = getStats();
     const totalCalls = await getTotalApiCalls();
     const totalUsers = await getTotalUsers();
     res.render('admin', {
       ...getViewData(req),
       title: 'Admin Panel',
-      users: usersResult.rows,
+      users,
       apis: getAPIs(),
       stats: {
         ...apiStats,
@@ -248,11 +257,11 @@ app.post('/api/user/verify-password', requireAuth, async (req, res) => {
     if (!password) {
       return res.status(400).json({ success: false, error: 'Password is required' });
     }
-    const result = await pool.query('SELECT password FROM users WHERE id = $1', [req.session.user.id]);
-    if (result.rows.length === 0) {
+    const storedPassword = await db.getUserPassword(req.session.user.id);
+    if (!storedPassword) {
       return res.status(404).json({ success: false, error: 'User not found' });
     }
-    const match = await bcrypt.compare(password, result.rows[0].password);
+    const match = await bcrypt.compare(password, storedPassword);
     if (!match) {
       return res.status(401).json({ success: false, error: 'Incorrect password' });
     }
@@ -264,13 +273,9 @@ app.post('/api/user/verify-password', requireAuth, async (req, res) => {
 
 app.get('/api/user/stats', requireAuth, async (req, res) => {
   try {
-    const userResult = await pool.query(
-      'SELECT api_calls, daily_api_calls, daily_reset_at, rate_limited_until FROM users WHERE id = $1',
-      [req.session.user.id]
-    );
+    const user = await db.getUserStats(req.session.user.id);
     const apiStats = getStats();
     const totalCalls = await getTotalApiCalls();
-    const user = userResult.rows[0];
     const now = new Date();
 
     let dailyCalls = user?.daily_api_calls || 0;
@@ -304,17 +309,8 @@ app.get('/api/user/stats', requireAuth, async (req, res) => {
 
 app.get('/api/notifications', requireAuth, async (req, res) => {
   try {
-    const userId = req.session.user.id;
-    const result = await pool.query(`
-      SELECT n.id, n.sender, n.title, n.message, n.created_at,
-        CASE WHEN nr.id IS NOT NULL THEN true ELSE false END as is_read
-      FROM notifications n
-      LEFT JOIN notification_reads nr ON nr.notification_id = n.id AND nr.user_id = $1
-      WHERE n.target_all = true OR n.target_user_id = $1
-      ORDER BY n.created_at DESC
-      LIMIT 50
-    `, [userId]);
-    res.json(result.rows);
+    const notifications = await db.getNotifications(req.session.user.id);
+    res.json(notifications);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch notifications' });
   }
@@ -323,17 +319,11 @@ app.get('/api/notifications', requireAuth, async (req, res) => {
 app.post('/api/notifications/:id/read', requireAuth, async (req, res) => {
   try {
     const userId = req.session.user.id;
-    const check = await pool.query(
-      'SELECT id FROM notifications WHERE id = $1 AND (target_all = true OR target_user_id = $2)',
-      [req.params.id, userId]
-    );
-    if (check.rows.length === 0) {
+    const hasAccess = await db.checkNotificationAccess(req.params.id, userId);
+    if (!hasAccess) {
       return res.status(403).json({ error: 'Not authorized' });
     }
-    await pool.query(
-      'INSERT INTO notification_reads (notification_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-      [req.params.id, userId]
-    );
+    await db.markNotificationRead(req.params.id, userId);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Failed to mark as read' });
@@ -342,13 +332,7 @@ app.post('/api/notifications/:id/read', requireAuth, async (req, res) => {
 
 app.post('/api/notifications/read-all', requireAuth, async (req, res) => {
   try {
-    const userId = req.session.user.id;
-    await pool.query(`
-      INSERT INTO notification_reads (notification_id, user_id)
-      SELECT n.id, $1 FROM notifications n
-      LEFT JOIN notification_reads nr ON nr.notification_id = n.id AND nr.user_id = $1
-      WHERE (n.target_all = true OR n.target_user_id = $1) AND nr.id IS NULL
-    `, [userId]);
+    await db.markAllNotificationsRead(req.session.user.id);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Failed to mark all as read' });
@@ -361,17 +345,8 @@ app.post('/api/admin/notify', requireAdmin, async (req, res) => {
     if (!title || !message) {
       return res.status(400).json({ error: 'Title and message are required' });
     }
-    if (targetUserId && targetUserId !== 'all') {
-      await pool.query(
-        'INSERT INTO notifications (title, message, target_user_id, target_all) VALUES ($1, $2, $3, false)',
-        [title, message, parseInt(targetUserId)]
-      );
-    } else {
-      await pool.query(
-        'INSERT INTO notifications (title, message, target_all) VALUES ($1, $2, true)',
-        [title, message]
-      );
-    }
+    const target = (targetUserId && targetUserId !== 'all') ? targetUserId : null;
+    await db.createNotification(title, message, target);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Failed to send notification' });
