@@ -18,23 +18,46 @@
   <a href="#-deployment">Deployment</a> •
   <a href="#-adding-api-commands">Adding APIs</a> •
   <a href="#-environment-variables">Configuration</a> •
-  <a href="#-project-structure">Structure</a>
+  <a href="#-project-structure">Structure</a> •
+  <a href="#-faq">FAQ</a>
 </p>
 
 ---
 
 ## Features
 
-- **Modular API Command System** — Drop a `.js` file into `/commands/` and it auto-loads as a new API endpoint
-- **User Authentication** — Secure registration, login, and session management with bcrypt password hashing
-- **API Key Management** — Each user gets a unique API key with one-click regeneration
-- **Built-in API Tester** — Test any loaded API directly from the dashboard with auto-generated copyable URLs
-- **Admin Panel** — Manage users, view platform stats, and send notifications from `/korekong/admin`
-- **Notification System** — Admin can broadcast messages to all users or target specific ones; users see real-time notifications with modal previews
-- **Rate Limiting** — Built-in protection against abuse on auth and API endpoints
-- **API Call Tracking** — Every API call is logged and counted per user
-- **Mobile-First Design** — Responsive UI with side drawer navigation, optimized for all screen sizes
-- **Multi-Host Compatible** — Deploy on Replit, Render, Railway, Vercel, Hostinger, VPS, or any Node.js host
+### Core Platform
+- **Modular API Command System** — Drop a `.js` file into `/commands/` and it auto-loads as a new API endpoint on server start. No router edits needed.
+- **User Authentication** — Secure registration and login with bcrypt password hashing, session management, and persistent login state.
+- **API Key Management** — Every registered user receives a unique API key. Keys can be regenerated at any time from the dashboard.
+- **Password-Protected API Key Viewing** — API keys are blurred by default on the dashboard. Users must re-enter their password to reveal the key, preventing shoulder-surfing.
+
+### Rate Limiting & Usage Tracking
+- **Daily API Rate Limiting** — Each API key is limited to **200 requests per day** for key-required endpoints. When the limit is reached, a **12-hour cooldown** period is enforced before the key can be used again.
+- **API Call Tracking** — Every API call is logged with the user, route, status code, and response time. Total and daily call counts are tracked per user.
+- **Real-Time Usage Dashboard** — The user dashboard displays current daily usage (e.g., "42/200 today"), total lifetime API calls, and a warning banner when rate-limited. Stats auto-refresh every 5 seconds.
+
+### Dashboard & API Tester
+- **Built-in API Tester** — Select any loaded API command from a dropdown, fill in parameters, and test it directly from the dashboard. Results display in a formatted JSON viewer.
+- **Auto-Generated Copyable URLs** — The API tester automatically builds the full request URL (using the correct public domain) with all parameters filled in. One-click copy to clipboard.
+- **Skeleton Loading** — Dashboard elements show animated skeleton placeholders while data loads, providing a polished user experience.
+- **Latency Monitor** — Real-time server latency displayed on the dashboard, measured via ping endpoint.
+
+### Admin Panel
+- **Full Admin Dashboard** — Accessible at `/korekong/admin` with separate admin login. Displays total users, API calls, active/dead API counts, and real-time stats.
+- **Enhanced User Management** — Card-based user list showing username, email, blurred password hash (toggle to reveal), account creation date/time, total API calls, daily usage out of 200, and a "Rate Limited" badge when applicable.
+- **Notification Sender** — Send messages to all users or target a specific user by username. Messages support rich formatting.
+
+### Notification System
+- **Real-Time Notifications** — Users receive notifications via a bell icon with unread count badge. Notifications poll the server every 3 seconds for real-time delivery.
+- **Modal Preview** — Click any notification to open a full modal with formatted content. Closing the modal automatically marks it as read.
+- **Rich Formatting** — Notification messages support `**bold**`, `*italic*`, `` `code` ``, and URLs are automatically converted to clickable links.
+- **Broadcast & Targeted** — Admin can send to all users (including future accounts) or to a specific user.
+
+### Design & Compatibility
+- **Mobile-First Responsive Design** — Fully responsive UI with side drawer navigation on mobile, optimized for all screen sizes.
+- **Multi-Host Compatible** — Deploy on Replit, Render, Railway, Vercel, Hostinger, VPS, or any Node.js hosting provider.
+- **Custom Color Palette** — Themed with a distinctive green-yellow palette: Deep Green `#114232`, Lime Green `#87A922`, Yellow `#FCDC2A`, Light Yellow `#F7F6BB`.
 
 ---
 
@@ -45,7 +68,7 @@
 | Runtime | Node.js 18+ |
 | Framework | Express 5.x |
 | Templates | EJS + TailwindCSS (CDN) |
-| Database | PostgreSQL |
+| Database | PostgreSQL (default) |
 | Auth | bcryptjs + express-session |
 | Session Store | connect-pg-simple |
 | HTTP Client | axios |
@@ -58,7 +81,7 @@
 ### Prerequisites
 
 - **Node.js** 18 or higher
-- **PostgreSQL** database (local or cloud)
+- **PostgreSQL** database (local or cloud-hosted)
 - **npm** or **yarn**
 
 ### 1. Clone the Repository
@@ -99,7 +122,15 @@ ADMIN_PASSWORD=your-secure-password
 npm start
 ```
 
-The server starts at `http://localhost:5000`
+The server starts at `http://localhost:5000`. The database tables are created automatically on first run — no manual migration needed.
+
+### 5. Access the Platform
+
+- **Landing Page**: `http://localhost:5000`
+- **Register**: `http://localhost:5000/register`
+- **Login**: `http://localhost:5000/login`
+- **Admin Panel**: `http://localhost:5000/korekong/admin/login`
+  - Default credentials: whatever you set in `ADMIN_USERNAME` and `ADMIN_PASSWORD` (defaults to `admin` / `admin123` if not set)
 
 ---
 
@@ -107,10 +138,10 @@ The server starts at `http://localhost:5000`
 
 ### Deploy on Replit
 
-1. Fork/import this repository on [Replit](https://replit.com)
+1. Fork or import this repository on [Replit](https://replit.com)
 2. Replit automatically provides a PostgreSQL database via `DATABASE_URL`
 3. Set your secrets in the Secrets tab: `SESSION_SECRET`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`
-4. Click **Run** — the app starts automatically
+4. Click **Run** — the app starts automatically on port 5000
 
 [![Run on Replit](https://replit.com/badge?caption=Run%20on%20Replit)](https://replit.com/github/carljohnvillavito/bilyabits-rapi)
 
@@ -126,11 +157,16 @@ The server starts at `http://localhost:5000`
    - **Environment**: `Node`
 4. Add a **PostgreSQL** database from Render's dashboard
 5. Set environment variables:
-   - `DATABASE_URL` — Auto-provided by Render if you link the DB
-   - `DB_SSL=true` — Required for Render PostgreSQL
-   - `SESSION_SECRET`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`
-   - `BASE_URL` — Your Render app URL (e.g., `https://myapp.onrender.com`)
-   - `NODE_ENV=production`
+
+| Variable | Value |
+|----------|-------|
+| `DATABASE_URL` | Auto-provided by Render when you link the DB |
+| `DB_SSL` | `true` (required for Render PostgreSQL) |
+| `SESSION_SECRET` | A random string (e.g., generate with `openssl rand -hex 32`) |
+| `ADMIN_USERNAME` | Your admin username |
+| `ADMIN_PASSWORD` | Your admin password |
+| `BASE_URL` | Your Render app URL (e.g., `https://myapp.onrender.com`) |
+| `NODE_ENV` | `production` |
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/carljohnvillavito/bilyabits-rapi)
 
@@ -142,11 +178,16 @@ The server starts at `http://localhost:5000`
 2. Add a **PostgreSQL** plugin
 3. Deploy from GitHub
 4. Set environment variables:
-   - `DATABASE_URL` — Auto-provided by Railway
-   - `DB_SSL=true`
-   - `SESSION_SECRET`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`
-   - `BASE_URL` — Your Railway app URL
-   - `NODE_ENV=production`
+
+| Variable | Value |
+|----------|-------|
+| `DATABASE_URL` | Auto-provided by Railway |
+| `DB_SSL` | `true` |
+| `SESSION_SECRET` | A random string |
+| `ADMIN_USERNAME` | Your admin username |
+| `ADMIN_PASSWORD` | Your admin password |
+| `BASE_URL` | Your Railway app URL |
+| `NODE_ENV` | `production` |
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template?referralCode=bilyabits)
 
@@ -154,7 +195,7 @@ The server starts at `http://localhost:5000`
 
 ### Deploy on Vercel (Serverless)
 
-> **Note**: Vercel runs serverless functions. This app works best on platforms with persistent servers (Render, Railway, Replit, VPS). For Vercel, you may need to adapt the session store.
+> **Note**: Vercel runs serverless functions without persistent processes. This app works best on platforms with persistent servers (Render, Railway, Replit, VPS). For Vercel, you may need to adapt the session store to use a stateless approach (e.g., JWT) or an external Redis session store.
 
 ---
 
@@ -168,8 +209,9 @@ sudo apt install -y nodejs
 # Install PostgreSQL
 sudo apt install -y postgresql postgresql-contrib
 
-# Create database
-sudo -u postgres createdb bilyabits
+# Create database and user
+sudo -u postgres psql -c "CREATE USER bilyabits WITH PASSWORD 'your-db-password';"
+sudo -u postgres psql -c "CREATE DATABASE bilyabits OWNER bilyabits;"
 
 # Clone and setup
 git clone https://github.com/carljohnvillavito/bilyabits-rapi.git
@@ -190,7 +232,7 @@ pm2 startup
 ### Deploy on Hostinger VPS
 
 1. SSH into your Hostinger VPS
-2. Follow the VPS instructions above
+2. Follow the VPS instructions above to install Node.js, PostgreSQL, and the app
 3. Set up a reverse proxy with Nginx:
 
 ```nginx
@@ -213,6 +255,7 @@ server {
 ```
 
 4. Enable SSL with Certbot:
+
 ```bash
 sudo apt install certbot python3-certbot-nginx
 sudo certbot --nginx -d your-domain.com
@@ -224,17 +267,17 @@ sudo certbot --nginx -d your-domain.com
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `PORT` | No | `5000` | Server port |
-| `NODE_ENV` | No | — | Set to `production` for secure cookies |
-| `BASE_URL` | No | Auto-detected | Public URL of your app (used in generated API URLs) |
-| `DB_TYPE` | No | `postgresql` | Database type (`postgresql`, `mongodb`*, `supabase`*) |
-| `DATABASE_URL` | Yes | — | PostgreSQL connection string |
-| `DB_SSL` | No | Auto-detected | Set to `true` for cloud-hosted PostgreSQL |
-| `SESSION_SECRET` | Yes | Random | Secret for session encryption |
-| `ADMIN_USERNAME` | No | `admin` | Admin panel login username |
-| `ADMIN_PASSWORD` | No | `admin123` | Admin panel login password |
+| `PORT` | No | `5000` | Port the server listens on |
+| `NODE_ENV` | No | — | Set to `production` for secure cookies and HTTPS |
+| `BASE_URL` | No | Auto-detected | Public URL of your app (used in generated API URLs). If not set, detected from request headers. |
+| `DB_TYPE` | No | `postgresql` | Database type: `postgresql`, `mongodb`*, `supabase`* |
+| `DATABASE_URL` | Yes | — | PostgreSQL connection string (e.g., `postgresql://user:pass@host:5432/dbname`) |
+| `DB_SSL` | No | Auto-detected | Set to `true` for cloud-hosted PostgreSQL (Render, Neon, Supabase). Auto-detected for known cloud providers. |
+| `SESSION_SECRET` | Yes | Random | Secret key for encrypting session cookies. Use a long random string in production. |
+| `ADMIN_USERNAME` | No | `admin` | Username for the admin panel login |
+| `ADMIN_PASSWORD` | No | `admin123` | Password for the admin panel login |
 
-> *MongoDB and Supabase support is planned for future releases.
+> *MongoDB and Supabase database adapters are planned for future releases. The structure is in place but not yet implemented.
 
 ---
 
@@ -242,31 +285,31 @@ sudo certbot --nginx -d your-domain.com
 
 ```
 bilyabits-rapi/
-├── commands/               # API command modules (auto-loaded)
-│   ├── glm.js              # AI Chat (OpenRouter)
-│   ├── smsbomber.js        # Multi-provider SMS tool
-│   └── test-api.js         # Test/example API
+├── commands/               # API command modules (auto-loaded on start)
+│   ├── glm.js              # AI Chat (OpenRouter GLM Pony Alpha)
+│   ├── smsbomber.js        # Multi-provider SMS tool (5 providers)
+│   └── test-api.js         # Test/example API (no key required)
 ├── handlers/               # Core application logic
 │   ├── apiLoader.js        # Command loader & registry
-│   ├── apiRouter.js        # Dynamic route builder
-│   ├── auth.js             # Authentication helpers
-│   └── database.js         # Database connection & schema
+│   ├── apiRouter.js        # Dynamic route builder + rate limit enforcement
+│   ├── auth.js             # Authentication helpers (register, login, sessions)
+│   └── database.js         # Database connection, schema, & auto-migration
 ├── views/
 │   ├── pages/              # EJS page templates
-│   │   ├── landing.ejs     # Home/landing page
+│   │   ├── landing.ejs     # Home/landing page (SaaS-style MVP)
 │   │   ├── login.ejs       # Login page
 │   │   ├── register.ejs    # Registration page
-│   │   ├── dashboard.ejs   # User dashboard + API tester
-│   │   ├── admin.ejs       # Admin panel
-│   │   ├── admin-login.ejs # Admin login
-│   │   └── 404.ejs         # Error page
+│   │   ├── dashboard.ejs   # User dashboard + API tester + stats
+│   │   ├── admin.ejs       # Admin panel (users, stats, notifications)
+│   │   ├── admin-login.ejs # Admin login page
+│   │   └── 404.ejs         # Error/not found page
 │   └── partials/           # Shared EJS components
-│       ├── head.ejs        # HTML head + TailwindCSS config
-│       ├── header.ejs      # Navigation + notification panel
-│       └── footer.ejs      # Footer + notification scripts
+│       ├── head.ejs        # HTML head + TailwindCSS config + color palette
+│       ├── header.ejs      # Navigation bar + notification bell + drawer
+│       └── footer.ejs      # Footer + notification polling scripts
 ├── public/                 # Static files (CSS, JS, images)
 ├── server.js               # Express server entry point
-├── config.json             # App configuration (colors, socials)
+├── config.json             # App configuration (colors, socials, version)
 ├── .env.example            # Environment variable template
 ├── package.json            # Dependencies and scripts
 └── README.md               # This file
@@ -276,7 +319,7 @@ bilyabits-rapi/
 
 ## Adding API Commands
 
-Create a new `.js` file in the `/commands/` directory. It will be automatically loaded on server start.
+Create a new `.js` file in the `/commands/` directory. It will be automatically loaded when the server starts — no need to edit any router files.
 
 ### Template
 
@@ -285,15 +328,15 @@ const { importAsset } = require("../handlers/apiLoader");
 const axios = require("axios");
 
 const api = {
-  name: "My API Tool",                    // Display name
-  description: "What this tool does",     // Shown in dashboard
-  route: "/my-tool",                      // URL path (under category)
+  name: "My API Tool",
+  description: "A brief description of what this tool does",
+  route: "/my-tool",
   params: {
     "query=": { type: "string", required: true },
     "limit=": { type: "int", required: false },
   },
-  category: "Tools",                      // Category grouping
-  "api-key": true,                        // Require API key? (true/false)
+  category: "Tools",
+  "api-key": true,
 };
 
 importAsset(api, async (params) => {
@@ -302,30 +345,46 @@ importAsset(api, async (params) => {
     throw new Error('Parameter "query" is required');
   }
 
-  // Your logic here
-  // Use axios for HTTP requests
+  // Your logic here — use axios for external HTTP requests
+  const response = await axios.get(`https://some-api.com/data?q=${query}`);
 
   return {
-    result: "your data here",
+    result: response.data,
   };
 });
 ```
 
+### How It Works
+
+1. **File placed in `/commands/`** — The server scans this folder on startup and loads every `.js` file.
+2. **`importAsset(api, handler)`** — Registers the API definition and its handler function into the platform.
+3. **Route is auto-generated** — The `category` and `route` are combined. For example, category `AI` + route `/chat` creates the endpoint `/ai/chat`.
+4. **Parameters are auto-parsed** — Query parameters matching `params` keys are extracted and passed to the handler.
+5. **Appears in dashboard** — The API tool instantly shows up in every user's dashboard API tester dropdown.
+
 ### Parameter Types
 
-| Type | Description |
-|------|-------------|
-| `string` | Text input |
-| `int` | Integer number |
+| Type | Description | Example |
+|------|-------------|---------|
+| `string` | Text input | `?query=hello+world` |
+| `int` | Integer number | `?limit=10` |
 
-### Key Notes
+### API Key Requirement
 
-- **Route**: Automatically prefixed with the category (e.g., category `AI` + route `/chat` = `/ai/chat`)
-- **API Keys**: When `api-key: true`, users must pass `?apikey=their-key` in the request
-- **Required/Optional**: Parameters with `required: true` show a red badge; `required: false` shows a gray badge
-- **Keep API keys in command files**: Store third-party API keys directly in the command file, not in environment variables (project convention)
+| Setting | Behavior |
+|---------|----------|
+| `"api-key": true` | Users must include `?apikey=their-key` in the request. Calls count toward the 200/day rate limit. |
+| `"api-key": false` | Endpoint is publicly accessible without authentication. No rate limiting applied. |
 
-### Example: Simple Text API
+### Convention: Third-Party API Keys
+
+Store third-party API keys (OpenRouter, RapidAPI, etc.) directly inside the command file as constants — not in environment variables. This keeps each command self-contained and portable.
+
+```js
+const API_KEY = "sk-your-third-party-key-here";
+```
+
+### Example: Simple Text API (No Key Required)
 
 ```js
 const { importAsset } = require("../handlers/apiLoader");
@@ -350,6 +409,14 @@ importAsset(api, async (params) => {
 });
 ```
 
+### Included API Commands
+
+| Command | Category | Key Required | Description |
+|---------|----------|--------------|-------------|
+| GLM Pony Alpha | AI | Yes | Chat with an AI assistant via OpenRouter. Supports system prompts and user IDs. |
+| SMS Bomber | Tools | Yes | Multi-provider SMS tool with 5 OTP providers (Abenson, Palawan, Toktok, JRS, Transportify). |
+| Test API | General | No | Simple test endpoint to verify the system is working. Returns a message and timestamp. |
+
 ---
 
 ## Routes
@@ -363,88 +430,171 @@ importAsset(api, async (params) => {
 | POST | `/login` | Login handler |
 | GET | `/register` | Registration page |
 | POST | `/register` | Registration handler |
-| GET | `/logout` | Logout |
+| GET | `/logout` | Logout and destroy session |
+| GET | `/api/ping` | Health check endpoint (returns `{ pong: true }`) |
 
-### User Routes (Auth Required)
+### User Routes (Login Required)
 
 | Method | Route | Description |
 |--------|-------|-------------|
-| GET | `/user/:username` | User dashboard |
-| POST | `/user/:username/regenerate-key` | Regenerate API key |
-| GET | `/api/user/stats` | Get user stats (JSON) |
-| GET | `/api/notifications` | Get notifications (JSON) |
-| POST | `/api/notifications/:id/read` | Mark notification as read |
-| POST | `/api/notifications/read-all` | Mark all as read |
+| GET | `/user/:username` | User dashboard with API tester and stats |
+| POST | `/user/:username/regenerate-key` | Regenerate API key (old key is invalidated) |
+| POST | `/api/user/verify-password` | Verify password to reveal blurred API key |
+| GET | `/api/user/stats` | Get daily usage, rate limit status, and API call stats (JSON) |
+| GET | `/api/notifications` | Get user's notifications with read status (JSON) |
+| POST | `/api/notifications/:id/read` | Mark a specific notification as read |
+| POST | `/api/notifications/read-all` | Mark all notifications as read |
 
-### Admin Routes
+### Admin Routes (Admin Login Required)
 
 | Method | Route | Description |
 |--------|-------|-------------|
 | GET | `/korekong/admin/login` | Admin login page |
 | POST | `/korekong/admin/login` | Admin login handler |
-| GET | `/korekong/admin` | Admin panel |
-| POST | `/api/admin/notify` | Send notification |
+| GET | `/korekong/admin` | Admin panel (users, stats, notification sender) |
+| GET | `/korekong/admin/logout` | Admin logout |
+| GET | `/api/admin/stats` | Real-time admin stats (JSON, auto-refreshes) |
+| POST | `/api/admin/notify` | Send notification to all users or a specific user |
 
-### API Routes (Dynamic)
+### Dynamic API Routes
 
 | Method | Route | Description |
 |--------|-------|-------------|
-| GET | `/:category/:route` | Dynamic API endpoints |
-| GET | `/api/ping` | Health check |
+| GET | `/:category/:route` | Auto-generated from command files. Example: `/ai/glm?q=hello&apikey=xxx` |
 
 ---
 
 ## Database Schema
 
-The app automatically creates these tables on first run:
+All tables are created automatically on first server start. No manual migration is needed.
 
 ### `users`
+
 | Column | Type | Description |
 |--------|------|-------------|
-| id | SERIAL PK | Auto-increment ID |
-| username | VARCHAR(50) | Unique username |
-| email | VARCHAR(255) | Unique email |
-| password | VARCHAR(255) | Bcrypt hashed password |
-| api_key | VARCHAR(100) | Unique API key |
-| api_calls | INTEGER | Total API calls count |
-| created_at | TIMESTAMP | Registration date |
-| last_login | TIMESTAMP | Last login date |
+| `id` | SERIAL PK | Auto-incrementing user ID |
+| `username` | VARCHAR(50) UNIQUE | Login username |
+| `email` | VARCHAR(255) UNIQUE | User email address |
+| `password` | VARCHAR(255) | Bcrypt-hashed password (10 rounds) |
+| `api_key` | VARCHAR(100) UNIQUE | User's API key for authenticated endpoints |
+| `api_calls` | INTEGER | Total lifetime API calls |
+| `daily_api_calls` | INTEGER | API calls made today (resets every 24 hours) |
+| `daily_reset_at` | TIMESTAMP | When the daily counter was last reset |
+| `rate_limited_until` | TIMESTAMP | Cooldown expiry time (null if not rate-limited) |
+| `created_at` | TIMESTAMP | Account creation date |
+| `last_login` | TIMESTAMP | Most recent login date |
 
 ### `notifications`
+
 | Column | Type | Description |
 |--------|------|-------------|
-| id | SERIAL PK | Auto-increment ID |
-| sender | VARCHAR(50) | Sender name (default: Admin) |
-| target_user_id | INTEGER FK | Specific user target (nullable) |
-| target_all | BOOLEAN | Broadcast to all users |
-| title | VARCHAR(255) | Notification title |
-| message | TEXT | Notification body |
-| created_at | TIMESTAMP | Send date |
+| `id` | SERIAL PK | Notification ID |
+| `sender` | VARCHAR(50) | Sender name (default: "Admin") |
+| `target_user_id` | INTEGER FK | Specific target user (null for broadcasts) |
+| `target_all` | BOOLEAN | `true` for broadcast to all users |
+| `title` | VARCHAR(255) | Notification title |
+| `message` | TEXT | Notification body (supports formatting) |
+| `created_at` | TIMESTAMP | When the notification was sent |
 
 ### `notification_reads`
-Tracks which notifications each user has read.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | SERIAL PK | Read record ID |
+| `notification_id` | INTEGER FK | References `notifications.id` |
+| `user_id` | INTEGER FK | The user who read it |
+| `read_at` | TIMESTAMP | When it was marked as read |
 
 ### `api_calls_log`
-Logs every API call with user, route, status code, and response time.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | SERIAL PK | Log entry ID |
+| `user_id` | INTEGER FK | The user who made the call (null for public endpoints) |
+| `api_name` | VARCHAR(100) | Name of the API command called |
+| `api_route` | VARCHAR(255) | Full route path |
+| `status_code` | INTEGER | HTTP response status code (default: 200) |
+| `response_time_ms` | INTEGER | Response time in milliseconds |
+| `called_at` | TIMESTAMP | When the call was made |
 
 ### `session`
-Express session storage (managed by connect-pg-simple).
+
+Managed automatically by `connect-pg-simple`. Stores Express session data for persistent login state.
+
+---
+
+## Rate Limiting
+
+### API Key Rate Limiting
+
+| Setting | Value |
+|---------|-------|
+| Daily limit per key | **200 requests/day** |
+| Cooldown when limit hit | **12 hours** |
+| Applies to | Endpoints with `"api-key": true` only |
+| Counter reset | Automatically after 24 hours or after cooldown expires |
+
+**How it works:**
+1. Each API key starts with 0/200 daily calls.
+2. Every successful call to a key-required endpoint increments the counter.
+3. When 200 calls are reached, the key enters a 12-hour cooldown period.
+4. During cooldown, all key-required API calls return a `429 Too Many Requests` error with the cooldown expiry time.
+5. After the cooldown expires, the counter resets and the key is usable again.
+6. If 24 hours pass without hitting the limit, the counter resets normally.
+
+### Server-Level Rate Limiting
+
+| Endpoint | Limit | Window |
+|----------|-------|--------|
+| Login / Register | 20 attempts | 15 minutes |
+| General API calls | 60 requests | 1 minute |
 
 ---
 
 ## Notification System
 
 ### For Admins
-- Go to `/korekong/admin` and use the notification sender
-- Choose **All Users** or a specific user
-- Messages support basic formatting: `**bold**`, `*italic*`, `` `code` ``, and URLs auto-link
+
+1. Log in to the admin panel at `/korekong/admin`
+2. Scroll to the **Send Notification** section
+3. Choose a target: **All Users** or enter a specific username
+4. Write a title and message body
+5. Click **Send Notification**
+
+Messages support rich formatting:
+
+| Syntax | Renders As |
+|--------|-----------|
+| `**text**` | **Bold text** |
+| `*text*` | *Italic text* |
+| `` `code` `` | `Inline code` |
+| `https://example.com` | Clickable link (auto-detected) |
 
 ### For Users
-- Notifications appear in the bell icon (top-right)
-- Unread count shown as a red badge
-- Click any notification to open a full modal preview
-- Closing the modal automatically marks it as read
-- "Mark all read" button available
+
+- A **bell icon** in the header shows unread notification count as a red badge.
+- Click the bell to open the notification panel showing all recent notifications.
+- Click any notification to open a **full modal preview** with formatted content.
+- Closing the modal automatically marks that notification as read.
+- Use **"Mark all read"** to clear the unread count.
+- Notifications poll the server every 3 seconds for real-time delivery.
+- Broadcast notifications (sent to "All Users") are visible to all accounts, including those created after the notification was sent.
+
+---
+
+## Security
+
+| Feature | Implementation |
+|---------|---------------|
+| Password Hashing | bcryptjs with 10 salt rounds |
+| Session Cookies | `httpOnly: true`, `sameSite: lax`, `secure: true` in production |
+| Security Headers | Helmet.js (XSS protection, content sniffing prevention, etc.) |
+| Auth Rate Limiting | 20 login/register attempts per 15 minutes |
+| API Rate Limiting | 60 general requests per minute + 200/day per API key |
+| API Key Protection | Keys are blurred on dashboard; password re-entry required to reveal |
+| Admin Credentials | Stored in environment variables, never in source code |
+| Proxy Support | `trust proxy` enabled for correct IP detection behind reverse proxies |
+| SSL Auto-Detection | Automatically enables SSL for known cloud PostgreSQL providers |
 
 ---
 
@@ -452,22 +602,84 @@ Express session storage (managed by connect-pg-simple).
 
 | Color | Hex | Usage |
 |-------|-----|-------|
-| Deep Green | `#114232` | Primary / backgrounds |
-| Lime Green | `#87A922` | Secondary / accents |
-| Yellow | `#FCDC2A` | Accent / highlights |
-| Light Yellow | `#F7F6BB` | Light text / subtle elements |
+| Deep Green | `#114232` | Primary backgrounds, header, footer |
+| Lime Green | `#87A922` | Secondary color, accents, badges |
+| Yellow | `#FCDC2A` | Highlights, active states, buttons |
+| Light Yellow | `#F7F6BB` | Light text, subtle background elements |
 
 ---
 
-## Security
+## FAQ
 
-- Passwords hashed with **bcryptjs** (10 rounds)
-- Session cookies: `httpOnly`, `sameSite: lax`, `secure` in production
-- **Helmet** security headers
-- **Rate limiting**: 20 auth attempts / 15 min, 60 API calls / min
-- CSRF-safe session cookies
-- Admin credentials in environment variables (never in code)
-- `trust proxy` enabled for reverse proxy deployments
+### General
+
+**Q: Do I need to set up the database tables manually?**
+A: No. All tables are created automatically when the server starts for the first time. Just provide a valid `DATABASE_URL` and the app handles the rest.
+
+**Q: What happens if I forget to set `SESSION_SECRET`?**
+A: The app will generate a random session secret on startup. However, this means all user sessions will be invalidated every time the server restarts. Always set a fixed `SESSION_SECRET` in production.
+
+**Q: Can I use this with MySQL or SQLite?**
+A: Currently only PostgreSQL is fully supported. MongoDB and Supabase adapters are planned. MySQL and SQLite are not on the roadmap, but you could contribute an adapter by modifying `handlers/database.js`.
+
+### Users & Authentication
+
+**Q: How do I register a new account?**
+A: Go to `/register`, fill in a username, email, and password. You'll be automatically logged in and redirected to your dashboard.
+
+**Q: How do I see my API key?**
+A: On your dashboard, the API key is blurred for security. Click the eye icon and enter your password to reveal it. The key will re-blur when you navigate away.
+
+**Q: Can I regenerate my API key?**
+A: Yes. On your dashboard, click the **Regenerate** button. Your old key will stop working immediately, and a new key will be issued.
+
+**Q: What does "Rate Limited" mean?**
+A: If you make more than 200 API calls in a single day using key-required endpoints, your key enters a 12-hour cooldown. During this time, all key-required API calls will return a `429` error. Your dashboard will show a warning banner with the exact time your key will be unlocked.
+
+**Q: Does the rate limit affect all endpoints?**
+A: No. Only endpoints that require an API key (`"api-key": true` in the command file) count toward your daily limit. Public endpoints (like `/general/test`) have no per-key limit.
+
+### Admin Panel
+
+**Q: How do I access the admin panel?**
+A: Go to `/korekong/admin/login` and log in with the credentials set in your `ADMIN_USERNAME` and `ADMIN_PASSWORD` environment variables. Default is `admin` / `admin123` if not configured.
+
+**Q: Can I see user passwords?**
+A: No. The admin panel shows password hashes (bcrypt), not plain-text passwords. These are blurred by default and can be toggled for inspection, but they cannot be reversed.
+
+**Q: How do I send a notification to users?**
+A: In the admin panel, use the notification sender form. Select "All Users" to broadcast or enter a specific username. Write a title and message, then click Send. The notification will appear for users within a few seconds.
+
+**Q: Do new users see old broadcast notifications?**
+A: Yes. Broadcast notifications (sent to "All Users") are visible to all accounts, including those created after the notification was sent.
+
+### API Commands
+
+**Q: How do I add a new API endpoint?**
+A: Create a new `.js` file in the `/commands/` folder following the template in the [Adding API Commands](#-adding-api-commands) section. Restart the server, and it will be automatically loaded and available in the dashboard.
+
+**Q: Where should I store third-party API keys?**
+A: Store them directly in the command file as constants (e.g., `const API_KEY = "sk-xxx"`). This keeps each command self-contained and follows the project convention.
+
+**Q: How do I make an endpoint public (no API key needed)?**
+A: Set `"api-key": false` in your command's `api` object. The endpoint will be accessible without any authentication.
+
+**Q: Can I have multiple endpoints in one command file?**
+A: Each command file should define one endpoint with one `importAsset()` call. For multiple related endpoints, create separate files (e.g., `ai-chat.js`, `ai-translate.js`).
+
+### Deployment & Hosting
+
+**Q: Do I need to set `BASE_URL`?**
+A: It's recommended for production. If not set, the app auto-detects the public URL from `x-forwarded-host` and `x-forwarded-proto` headers. However, some hosting providers may not send these headers correctly, so setting `BASE_URL` guarantees correct URL generation in the API tester.
+
+**Q: Do I need `DB_SSL=true`?**
+A: For cloud-hosted PostgreSQL (Render, Neon, Supabase, etc.), yes. The app auto-detects SSL for known providers, but you can explicitly set `DB_SSL=true` to be safe. For local PostgreSQL, leave it unset.
+
+**Q: Can I run this on a free tier?**
+A: Yes. The app runs well on Render's free tier, Railway's free tier, or Replit's free plan. Just note that free-tier servers on Render may spin down after inactivity.
+
+**Q: How do I keep the server running on a VPS?**
+A: Use PM2 (process manager): `pm2 start server.js --name bilyabits-rapi`. PM2 will auto-restart on crashes and can be configured to start on system boot with `pm2 startup`.
 
 ---
 
@@ -479,9 +691,14 @@ Express session storage (managed by connect-pg-simple).
 4. Push to the branch: `git push origin feature/my-feature`
 5. Open a Pull Request
 
-### Adding New API Commands
+### Ways to Contribute
 
-The easiest way to contribute is by adding new API commands. Just create a new file in `/commands/` following the template above.
+- **Add new API commands** — The easiest way to contribute. Create a new file in `/commands/` following the template above.
+- **Implement MongoDB adapter** — The structure is in `handlers/database.js`, waiting for implementation.
+- **Implement Supabase adapter** — Same as MongoDB, structure ready.
+- **Improve UI/UX** — Templates are in `/views/pages/` using EJS + TailwindCSS.
+- **Add tests** — No test suite exists yet. Adding one would be a great contribution.
+- **Documentation** — Improve this README, add code comments, or create a wiki.
 
 ---
 
@@ -492,5 +709,5 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ---
 
 <p align="center">
-  <strong>Built with ❤️ by <a href="https://github.com/carljohnvillavito">Carl John Villavito</a></strong>
+  <strong>Built with &#10084; by <a href="https://github.com/carljohnvillavito">Carl John Villavito</a></strong>
 </p>
