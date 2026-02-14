@@ -6,11 +6,17 @@
     "start": "node server.js",
     "dev": "node server.js"
   },
-  "keywords": ["rest-api", "api-platform", "nodejs", "express"],
+  "keywords": [
+    "rest-api",
+    "api-platform",
+    "nodejs",
+    "express"
+  ],
   "author": "Carl John Villavito",
   "license": "MIT",
   "description": "Open-source REST API platform with modular command system, user auth, and admin panel",
   "dependencies": {
+    "@supabase/supabase-js": "^2.95.3",
     "axios": "^1.13.5",
     "bcryptjs": "^3.0.3",
     "connect-pg-simple": "^10.0.0",

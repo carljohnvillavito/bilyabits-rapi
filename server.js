@@ -9,7 +9,7 @@ const bcrypt = require('bcryptjs');
 const path = require('path');
 
 const config = require('./config.json');
-const { pool, initDatabase } = require('./handlers/database');
+const { pool, dbClient, initDatabase } = require('./handlers/database');
 const { registerUser, loginUser, getUserByUsername, regenerateApiKey, requireAuth, requireAdmin } = require('./handlers/auth');
 const { loadCommands, getAPIs, getAPIsByCategory, getStats, getTotalApiCalls, getTotalUsers } = require('./handlers/apiLoader');
 const { setupApiRoutes } = require('./handlers/apiRouter');
@@ -38,12 +38,7 @@ app.use((req, res, next) => {
   next();
 });
 
-const sessionMiddleware = session({
-  store: new PgSession({
-    pool: pool,
-    tableName: 'session',
-    createTableIfMissing: true
-  }),
+const sessionConfig = {
   secret: process.env.SESSION_SECRET || require('crypto').randomBytes(32).toString('hex'),
   resave: false,
   saveUninitialized: false,
@@ -54,7 +49,15 @@ const sessionMiddleware = session({
     maxAge: 24 * 60 * 60 * 1000,
     sameSite: 'lax'
   }
+};
+
+sessionConfig.store = new PgSession({
+  pool: pool,
+  tableName: 'session',
+  createTableIfMissing: true
 });
+
+const sessionMiddleware = session(sessionConfig);
 app.use(sessionMiddleware);
 
 const authLimiter = rateLimit({

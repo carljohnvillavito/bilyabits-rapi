@@ -193,6 +193,40 @@ The server starts at `http://localhost:5000`. The database tables are created au
 
 ---
 
+### Deploy with Supabase Database
+
+You can use [Supabase](https://supabase.com) as your database on any hosting provider (Render, Railway, VPS, etc.). Supabase provides a free PostgreSQL database.
+
+**Setup Steps:**
+
+1. Create a free project on [Supabase](https://supabase.com)
+2. Go to **Project Settings > Database**
+3. Copy the **Connection string (URI)** — this is your `DATABASE_URL`
+4. On your hosting provider, set these environment variables:
+
+| Variable | Value |
+|----------|-------|
+| `DB_TYPE` | `supabase` |
+| `DATABASE_URL` | Your Supabase connection string (copied in step 3) |
+| `SESSION_SECRET` | A random string |
+| `ADMIN_USERNAME` | Your admin username |
+| `ADMIN_PASSWORD` | Your admin password |
+| `BASE_URL` | Your app's public URL |
+| `NODE_ENV` | `production` |
+
+> **Example Supabase connection string:**
+> `postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres`
+
+**Example: Render + Supabase**
+
+1. Create a Web Service on Render, connect your GitHub repo
+2. Build Command: `npm install` | Start Command: `npm start`
+3. Create a Supabase project, copy the connection string
+4. Add the environment variables above to Render
+5. Deploy — tables are created automatically on first start
+
+---
+
 ### Deploy on Vercel (Serverless)
 
 > **Note**: Vercel runs serverless functions without persistent processes. This app works best on platforms with persistent servers (Render, Railway, Replit, VPS). For Vercel, you may need to adapt the session store to use a stateless approach (e.g., JWT) or an external Redis session store.
@@ -270,14 +304,28 @@ sudo certbot --nginx -d your-domain.com
 | `PORT` | No | `5000` | Port the server listens on |
 | `NODE_ENV` | No | — | Set to `production` for secure cookies and HTTPS |
 | `BASE_URL` | No | Auto-detected | Public URL of your app (used in generated API URLs). If not set, detected from request headers. |
-| `DB_TYPE` | No | `postgresql` | Database type: `postgresql`, `mongodb`*, `supabase`* |
+| `DB_TYPE` | No | `postgresql` | Database type: `postgresql`, `supabase`, `mongodb`* |
 | `DATABASE_URL` | Yes | — | PostgreSQL connection string (e.g., `postgresql://user:pass@host:5432/dbname`) |
 | `DB_SSL` | No | Auto-detected | Set to `true` for cloud-hosted PostgreSQL (Render, Neon, Supabase). Auto-detected for known cloud providers. |
 | `SESSION_SECRET` | Yes | Random | Secret key for encrypting session cookies. Use a long random string in production. |
 | `ADMIN_USERNAME` | No | `admin` | Username for the admin panel login |
 | `ADMIN_PASSWORD` | No | `admin123` | Password for the admin panel login |
 
-> *MongoDB and Supabase database adapters are planned for future releases. The structure is in place but not yet implemented.
+> *MongoDB adapter is planned for a future release.
+
+### Supabase Configuration
+
+When using `DB_TYPE=supabase`, set `DATABASE_URL` to your Supabase PostgreSQL connection string:
+
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | Your Supabase PostgreSQL connection string. Find it in: Supabase Dashboard > Project Settings > Database > Connection string (URI). |
+
+> **Format**: `postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres`
+>
+> Supabase is PostgreSQL under the hood. By connecting directly to the database, you get full SQL support, automatic table creation, and persistent sessions — exactly like using regular PostgreSQL.
+>
+> **Note**: `SUPABASE_URL` and `SUPABASE_KEY` alone are not sufficient. This app requires the PostgreSQL connection string (`DATABASE_URL`) for direct database access.
 
 ---
 
@@ -620,7 +668,7 @@ A: No. All tables are created automatically when the server starts for the first
 A: The app will generate a random session secret on startup. However, this means all user sessions will be invalidated every time the server restarts. Always set a fixed `SESSION_SECRET` in production.
 
 **Q: Can I use this with MySQL or SQLite?**
-A: Currently only PostgreSQL is fully supported. MongoDB and Supabase adapters are planned. MySQL and SQLite are not on the roadmap, but you could contribute an adapter by modifying `handlers/database.js`.
+A: PostgreSQL and Supabase are fully supported. MongoDB is planned for a future release. MySQL and SQLite are not on the roadmap, but you could contribute an adapter by modifying `handlers/database.js`.
 
 ### Users & Authentication
 
@@ -669,6 +717,12 @@ A: Each command file should define one endpoint with one `importAsset()` call. F
 
 ### Deployment & Hosting
 
+**Q: How do I set up Supabase as my database?**
+A: Set `DB_TYPE=supabase` and add your Supabase PostgreSQL connection string as `DATABASE_URL`. To find your connection string: go to your Supabase Dashboard > Project Settings > Database > Connection string (URI). The format looks like: `postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres`. Tables are created automatically on first start, just like with regular PostgreSQL.
+
+**Q: I set `SUPABASE_URL` and `SUPABASE_KEY` but the app won't start. Why?**
+A: This app needs the Supabase PostgreSQL connection string, not the REST API credentials. Set `DATABASE_URL` to your Supabase PostgreSQL connection string instead. Find it in your Supabase Dashboard under Project Settings > Database > Connection string (URI). The `SUPABASE_URL` and `SUPABASE_KEY` are for client-side apps; this server-side app connects directly to the database for full SQL support.
+
 **Q: Do I need to set `BASE_URL`?**
 A: It's recommended for production. If not set, the app auto-detects the public URL from `x-forwarded-host` and `x-forwarded-proto` headers. However, some hosting providers may not send these headers correctly, so setting `BASE_URL` guarantees correct URL generation in the API tester.
 
@@ -695,7 +749,6 @@ A: Use PM2 (process manager): `pm2 start server.js --name bilyabits-rapi`. PM2 w
 
 - **Add new API commands** — The easiest way to contribute. Create a new file in `/commands/` following the template above.
 - **Implement MongoDB adapter** — The structure is in `handlers/database.js`, waiting for implementation.
-- **Implement Supabase adapter** — Same as MongoDB, structure ready.
 - **Improve UI/UX** — Templates are in `/views/pages/` using EJS + TailwindCSS.
 - **Add tests** — No test suite exists yet. Adding one would be a great contribution.
 - **Documentation** — Improve this README, add code comments, or create a wiki.

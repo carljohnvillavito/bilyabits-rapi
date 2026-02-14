@@ -4,6 +4,7 @@
 Open-source REST API platform built with Node.js, Express, EJS, and TailwindCSS. Supports multiple database types (PostgreSQL, MongoDB, Supabase) for user authentication, API key storage, and call tracking. Compatible with any hosting provider.
 
 ## Recent Changes
+- 2026-02-14: Implemented Supabase database support (PostgreSQL connection + REST API fallback)
 - 2026-02-14: Added API key rate limiting (200/day, 12h cooldown) with dashboard status display
 - 2026-02-14: Enhanced admin users table with card layout (email, password hash, date, daily usage, rate limit status)
 - 2026-02-14: Added notification modal popup with read/unread tracking and message formatting
@@ -67,8 +68,8 @@ importAsset(api, async (params) => { return result; });
 
 ### Database Support
 - `DB_TYPE=postgresql` (default) - Uses built-in Replit PostgreSQL
+- `DB_TYPE=supabase` - Uses Supabase PostgreSQL connection via DATABASE_URL (find in Supabase Dashboard > Project Settings > Database)
 - `DB_TYPE=mongodb` - Requires MONGODB_URI (structure ready, implementation pending)
-- `DB_TYPE=supabase` - Requires SUPABASE_URL + SUPABASE_KEY (structure ready, implementation pending)
 - `DB_SSL=true` - Enable for cloud-hosted PostgreSQL (auto-detected for Render/Neon)
 
 ### Hosting Compatibility
